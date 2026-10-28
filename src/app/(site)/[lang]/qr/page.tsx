@@ -14,7 +14,8 @@ export default async function QrPage({ params }: PageProps<'/[lang]/qr'>) {
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
   const t = getDict(lang)
-  const url = `${siteUrl()}/${lang}#menu`
+  const url = `${siteUrl()}/${lang}?utm_source=qr#menu`
+  const shown = siteUrl().replace(/^https?:\/\//, '')
   const svg = await QRCode.toString(url, { type: 'svg', margin: 0, color: { dark: '#120d0b', light: '#f4eee3' } })
   return (
     <main className="qr">
@@ -23,6 +24,7 @@ export default async function QrPage({ params }: PageProps<'/[lang]/qr'>) {
         <h1 className="display qr__title">{t.qr.title}</h1>
         <p>{t.qr.lead}</p>
         <div className="qr__code" role="img" aria-label={url} dangerouslySetInnerHTML={{ __html: svg }} />
+        <p className="qr__url">{shown}</p>
         <div className="qr__actions">
           <PrintButton label={t.qr.print} />
           <a className="btn btn--ghost" href={`/${lang}`}>

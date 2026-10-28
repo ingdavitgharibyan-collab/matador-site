@@ -63,12 +63,23 @@ export async function seedIfEmpty(payload: Payload) {
     await payload.updateGlobal({ slug: 'settings', locale, data: { address: settings.address[locale] } })
   }
 
-  const users = await payload.count({ collection: 'users' })
-  if (users.totalDocs === 0 && process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
-    await payload.create({
-      collection: 'users',
-      data: { email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD },
-    })
-  }
   payload.logger.info('Seed done.')
+}
+
+/**
+ * Nobody may claim the admin by being first to open /admin on a fresh server: in production the first user
+ * comes from ADMIN_EMAIL / ADMIN_PASSWORD, and the server refuses to start without them.
+ */
+export async function ensureAdmin(payload: Payload) {
+  const users = await payload.count({ collection: 'users' })
+  if (users.totalDocs > 0) return
+  const { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env
+  if (ADMIN_EMAIL && ADMIN_PASSWORD) {
+    await payload.create({ collection: 'users', data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD } })
+    payload.logger.info(`Admin user ${ADMIN_EMAIL} created from the environment.`)
+    return
+  }
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_OPEN_SIGNUP !== '1') {
+    throw new Error('No admin user exists. Set ADMIN_EMAIL and ADMIN_PASSWORD for the first start (see README).')
+  }
 }

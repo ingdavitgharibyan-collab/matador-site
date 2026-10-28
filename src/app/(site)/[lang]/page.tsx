@@ -8,10 +8,9 @@ import { IconPhone } from '@/components/icons'
 import { MapEmbed } from '@/components/MapEmbed'
 import { Menu } from '@/components/Menu'
 import { Motion } from '@/components/Motion'
-import { OpenStatus } from '@/components/OpenStatus'
+import { HoursTable, OpenStatus } from '@/components/OpenStatus'
 import { Ticket } from '@/components/Ticket'
 import { getMenu, getSettings } from '@/lib/data'
-import { yerevanNow } from '@/lib/hours'
 import { getDict, hasLocale } from '@/lib/i18n'
 import { jsonLd } from '@/lib/jsonld'
 
@@ -28,7 +27,6 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
   if (!hasLocale(lang)) notFound()
   const t = getDict(lang)
   const [menu, s] = await Promise.all([getMenu(lang), getSettings(lang)])
-  const today = yerevanNow().day
   const tel = `tel:${s.phone.replace(/[^\d+]/g, '')}`
   const q = `${s.lat},${s.lng}`
 
@@ -55,7 +53,10 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
               </a>
             </div>
             <div className="hero__status">
-              <OpenStatus hours={s.hours} t={t} />
+              <OpenStatus hours={s.hours} closures={s.closures} paused={s.paused} t={t} />
+              <a className="hero__where" href="#visit">
+                {s.address}
+              </a>
             </div>
           </div>
           <div className="hero__logo">
@@ -65,7 +66,7 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
               width={1400}
               height={1174}
               priority
-              sizes="(max-width: 860px) 100vw, 60vw"
+              sizes="(max-width: 860px) 75vw, 60vw"
             />
           </div>
         </section>
@@ -117,17 +118,9 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
             </div>
             <div>
               <h3>{t.visit.hours}</h3>
-              <OpenStatus hours={s.hours} t={t} />
-              <div className="hours" style={{ marginTop: 14 }}>
-                {s.hours.map((h, i) => (
-                  <div key={i} data-today={i === today}>
-                    <span>
-                      {t.days[i]}
-                      {i === today && <span className="sr-only"> ({t.visit.today})</span>}
-                    </span>
-                    <span>{h.closed ? t.visit.closed : `${h.open}–${h.close}`}</span>
-                  </div>
-                ))}
+              <OpenStatus hours={s.hours} closures={s.closures} paused={s.paused} t={t} />
+              <div style={{ marginTop: 14 }}>
+                <HoursTable hours={s.hours} closures={s.closures} t={t} />
               </div>
             </div>
             {(s.instagram || s.facebook || s.telegram) && (

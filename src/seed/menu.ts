@@ -373,9 +373,12 @@ export const settings = {
   deliveryFee: 500,
   freeDeliveryFrom: 10000,
   partners: [
-    { name: 'Yandex Eats', url: 'https://eda.yandex.am/' },
-    { name: 'Wolt', url: 'https://wolt.com/hy/arm/yerevan' },
-    { name: 'Glovo', url: 'https://glovoapp.com/am/en/yerevan/' },
-    { name: 'Menu.am', url: 'https://www.menu.am/' },
+    // SAMPLE store pages: replace with Matador's real listing on each service
+    { name: 'Yandex Eats', url: 'https://eda.yandex.am/r/matador' },
+    { name: 'Wolt', url: 'https://wolt.com/hy/arm/yerevan/restaurant/matador' },
+    { name: 'Glovo', url: 'https://glovoapp.com/am/en/yerevan/matador' },
+    { name: 'Menu.am', url: 'https://www.menu.am/en/yerevan/delivery/restaurant/matador' },
   ],
+  paymentMethods: ['cash', 'card_courier'] as ('cash' | 'card_courier')[],
+  lastOrderMinutes: 30,
 }

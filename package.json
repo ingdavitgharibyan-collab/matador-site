@@ -12,15 +12,19 @@
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
-    "seed": "cross-env NODE_OPTIONS=--no-deprecation tsx src/seed/index.ts"
+    "seed": "cross-env NODE_OPTIONS=--no-deprecation tsx src/seed/index.ts",
+    "build:local": "cross-env MATADOR_ALLOW_LOCAL_BUILD=1 npm run build",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test"
   },
   "engines": {
     "node": ">=20.9.0"
   },
   "dependencies": {
     "@payloadcms/db-sqlite": "^3.92.1",
+    "@payloadcms/email-nodemailer": "^3.92.1",
     "@payloadcms/next": "^3.92.1",
-    "@payloadcms/richtext-lexical": "^3.92.1",
     "@payloadcms/translations": "^3.92.1",
     "@payloadcms/ui": "^3.92.1",
     "cross-env": "^10.1.0",
@@ -35,6 +39,8 @@
     "sharp": "^0.35.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^22.20.5",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.3.0",
@@ -42,6 +48,10 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.3",
     "tsx": "^4.23.15",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "dompurify": "3.4.17"
   }
 }

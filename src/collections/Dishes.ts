@@ -1,9 +1,12 @@
 import type { CollectionConfig } from 'payload'
 
+import { revalidateAfterChange, revalidateAfterDelete } from '../hooks/revalidate'
+
 export const ART_KINDS = ['shawarma', 'plate', 'burger', 'skewer', 'ribs', 'fries', 'salad', 'drink', 'sauce'] as const
 
 export const Dishes: CollectionConfig = {
   slug: 'dishes',
+  hooks: { afterChange: [revalidateAfterChange], afterDelete: [revalidateAfterDelete] },
   admin: { useAsTitle: 'name', defaultColumns: ['name', 'category', 'price', 'available'] },
   access: { read: () => true },
   defaultSort: 'order',

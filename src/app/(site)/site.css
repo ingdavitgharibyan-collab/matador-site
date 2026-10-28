@@ -19,7 +19,7 @@
   --gap: clamp(120px, 14vw, 220px);
   --col: calc((100vw - 2 * var(--m)) / 12);
 
-  --t-hero: clamp(2.75rem, 7.4vw, 7rem);
+  --t-hero: clamp(2.75rem, 6.2vw, 5.75rem);
   --t-h2: clamp(2.5rem, 6.2vw, 6rem);
   --t-h3: clamp(1.75rem, 3.2vw, 2.75rem);
   --t-body: 1.0625rem;
@@ -318,18 +318,16 @@ html {
   overflow: clip;
 }
 .hero__text {
-  grid-column: 1 / span 5;
+  grid-column: 1 / span 6;
   grid-row: 1;
   position: relative;
   z-index: 2;
 }
 .hero__title {
-  font-size: var(--t-hero);
-  max-width: 11ch;
+  font-size: calc(var(--t-hero) * 0.76);
 }
 :lang(hy) .hero__title {
-  font-size: calc(var(--t-hero) * 0.82);
-  max-width: 12ch;
+  font-size: calc(var(--t-hero) * 0.74);
 }
 .hero__lead {
   margin-top: 36px;
@@ -343,10 +341,21 @@ html {
   margin-top: 36px;
 }
 .hero__status {
+  display: grid;
+  gap: 6px;
   margin-top: 28px;
 }
+.hero__where {
+  justify-self: start;
+  padding-left: 24px;
+  font-size: var(--t-small);
+  color: color-mix(in srgb, var(--cal) 82%, transparent);
+}
+.hero__where:hover {
+  color: var(--oro);
+}
 .hero__logo {
-  grid-column: 6 / span 7;
+  grid-column: 7 / span 6;
   grid-row: 1;
   justify-self: end;
   width: min(100%, 980px);
@@ -367,18 +376,38 @@ html {
     grid-column: 1;
     grid-row: 1;
     justify-self: center;
-    width: min(100%, 560px);
-    margin-bottom: 8px;
+    width: auto;
+    margin-bottom: 4px;
   }
+  .hero__logo img {
+    width: auto;
+    max-width: 100%;
+    max-height: 30svh;
+  }
+  /* phone: title, action and "open now · where" fit the first screen; the description follows */
   .hero__text {
     grid-column: 1;
     grid-row: 2;
+    display: flex;
+    flex-direction: column;
   }
-  .hero__lead {
-    margin-top: 24px;
+  .hero__title {
+    font-size: clamp(2rem, 10vw, 3.1rem);
+  }
+  :lang(hy) .hero__title {
+    font-size: clamp(2rem, 9.6vw, 2.9rem);
   }
   .hero__actions {
-    margin-top: 28px;
+    order: 2;
+    margin-top: 20px;
+  }
+  .hero__status {
+    order: 3;
+    margin-top: 16px;
+  }
+  .hero__lead {
+    order: 4;
+    margin-top: 24px;
   }
   .hero__actions .btn {
     flex: 1 1 auto;
@@ -802,6 +831,7 @@ dialog[open].sheet {
   position: fixed;
   inset: 0 0 0 auto;
   width: min(520px, 100vw);
+  max-width: 100vw;
   height: 100dvh;
   margin: 0 0 0 auto;
   background: transparent;
@@ -817,6 +847,7 @@ dialog[open].ticket .ticket__paper {
 }
 .ticket__paper {
   height: 100%;
+  min-width: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--cal);
@@ -1022,6 +1053,137 @@ dialog[open].ticket .ticket__paper {
   text-decoration: underline;
   font-weight: 600;
   color: var(--barrera);
+}
+
+.ticket__actions {
+  display: flex;
+  gap: 4px;
+}
+.ticket__actions .btn--red {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.15;
+}
+.btn--square {
+  width: 52px;
+  padding: 0;
+  flex: none;
+}
+.ticket__foot .btn--square {
+  width: 52px;
+}
+.ticket__fine {
+  font-size: var(--t-small);
+  color: color-mix(in srgb, var(--negro) 72%, transparent);
+}
+.field__err {
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--muleta-press);
+}
+.seg--wrap {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.notice,
+.gate {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 14px 16px;
+  background: var(--negro);
+  color: var(--cal);
+  font-weight: 600;
+}
+.gate {
+  background: var(--muleta);
+}
+.gate a {
+  font-weight: 800;
+}
+.notice .ticket__clear {
+  color: var(--oro);
+}
+.repeat {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: color-mix(in srgb, var(--albero) 45%, var(--cal));
+  text-align: left;
+}
+.repeat:hover {
+  background: var(--albero);
+}
+.stub {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+.stub__ref {
+  font-weight: 900;
+  font-stretch: 75%;
+  font-variation-settings: 'wdth' 75;
+  font-size: 1.5rem;
+}
+.stub__ref strong {
+  display: block;
+  font-size: 2.75rem;
+  line-height: 1;
+  color: var(--muleta);
+  letter-spacing: 0.02em;
+}
+.stub__lines {
+  display: grid;
+  gap: 4px;
+  font-weight: 700;
+}
+.stub__total {
+  font-weight: 900;
+  font-size: 1.375rem;
+}
+.stub__actions {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.tg {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+.tg__text {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid var(--negro);
+  border-radius: 0;
+  background: #fffaf2;
+  font: inherit;
+  font-size: var(--t-small);
+}
+/* short screens (landscape, on-screen keyboard): the form gets the room while a field is being typed in */
+@media (max-height: 560px) {
+  .ticket__head {
+    padding-block: 8px;
+    grid-template-columns: 40px minmax(0, 1fr) 48px;
+  }
+  .ticket__head img {
+    width: 40px;
+    height: 40px;
+  }
+  .ticket__title {
+    font-size: 1.5rem;
+  }
+  .ticket__paper:has(.form :focus) .ticket__foot {
+    display: none;
+  }
+}
+html.has-dialog {
+  overflow: hidden;
 }
 
 /* flying token when a dish is added */
@@ -1291,6 +1453,10 @@ dialog[open].ticket .ticket__paper {
 }
 .qr__code {
   width: min(320px, 100%);
+}
+.qr__url {
+  font-weight: 800;
+  font-size: 1.25rem;
 }
 .qr__title {
   font-size: clamp(2rem, 6vw, 3.25rem);

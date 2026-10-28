@@ -483,7 +483,7 @@ export interface Setting {
   lat: number;
   lng: number;
   /**
-   * Monday first. Closing after midnight is fine (e.g. 11:00 → 02:00).
+   * Rows are Monday → Sunday. Closing after midnight is fine (11:00 → 02:00). Same open and close time = open 24 h.
    */
   hours?:
     | {
@@ -494,6 +494,33 @@ export interface Setting {
       }[]
     | null;
   /**
+   * Holidays and one-off closures. The site shows "closed" and blocks orders on these days.
+   */
+  closures?:
+    | {
+        from: string;
+        to: string;
+        /**
+         * Shown to guests, e.g. "Closed for New Year"
+         */
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Stop taking orders right now (kitchen overloaded, outage). Calls stay possible.
+   */
+  ordersPaused?: boolean | null;
+  /**
+   * Stop taking orders this many minutes before closing
+   */
+  lastOrderMinutes?: number | null;
+  /**
+   * Optional reason shown while paused
+   */
+  pauseNote?: string | null;
+  paymentMethods?: ('cash' | 'card_courier' | 'idram' | 'telcell' | 'transfer')[] | null;
+  /**
    * AMD, 0 = free
    */
   deliveryFee?: number | null;
@@ -502,7 +529,7 @@ export interface Setting {
    */
   freeDeliveryFrom?: number | null;
   /**
-   * Delivery services (Yandex Eats, Wolt, Glovo, Menu.am…)
+   * Delivery services: paste Matador's own store page, not the service's home page
    */
   partners?:
     | {
@@ -535,6 +562,18 @@ export interface SettingsSelect<T extends boolean = true> {
         closed?: T;
         id?: T;
       };
+  closures?:
+    | T
+    | {
+        from?: T;
+        to?: T;
+        note?: T;
+        id?: T;
+      };
+  ordersPaused?: T;
+  lastOrderMinutes?: T;
+  pauseNote?: T;
+  paymentMethods?: T;
   deliveryFee?: T;
   freeDeliveryFrom?: T;
   partners?:

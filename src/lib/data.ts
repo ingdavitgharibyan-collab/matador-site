@@ -3,7 +3,10 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 import { cache } from 'react'
 
+import { type Closure, type Hours, yerevanDate } from './hours'
 import type { Locale } from './i18n'
+
+export type { Hours }
 
 export type MenuDish = {
   id: string
@@ -20,7 +23,6 @@ export type MenuDish = {
   category: string
 }
 export type MenuCategory = { slug: string; name: string; tagline: string; dishes: MenuDish[] }
-export type Hours = { open: string; close: string; closed: boolean }[]
 export type SiteSettings = {
   phone: string
   whatsapp: string
@@ -31,12 +33,31 @@ export type SiteSettings = {
   lat: number
   lng: number
   hours: Hours
+  closures: Closure[]
+  paused: boolean
+  pauseNote: string
+  lastOrderMinutes: number
+  paymentMethods: string[]
   deliveryFee: number
   freeDeliveryFrom: number | null
   partners: { name: string; url: string }[]
 }
 
 const payload = cache(() => getPayload({ config }))
+
+/**
+ * Payload stores upload URLs as absolute (serverURL + path). next/image only accepts local paths, so keep
+ * the path: the file is served by this same app whatever host the visitor used.
+ */
+const localPath = (u?: string | null) => {
+  if (!u) return null
+  if (u.startsWith('/')) return u
+  try {
+    return new URL(u).pathname
+  } catch {
+    return null
+  }
+}
 
 export const getMenu = cache(async (locale: Locale): Promise<MenuCategory[]> => {
   const p = await payload()
@@ -53,6 +74,7 @@ export const getMenu = cache(async (locale: Locale): Promise<MenuCategory[]> => 
         .filter((d) => (typeof d.category === 'object' ? d.category?.id : d.category) === c.id)
         .map((d) => {
           const photo = d.photo && typeof d.photo === 'object' ? d.photo : null
+          const photoUrl = localPath(photo?.sizes?.card?.url || photo?.url)
           return {
             id: String(d.id),
             name: d.name,
@@ -64,7 +86,7 @@ export const getMenu = cache(async (locale: Locale): Promise<MenuCategory[]> => 
             signature: Boolean(d.signature),
             available: d.available !== false,
             art: d.art ?? 'burger',
-            photo: photo?.url ? { url: photo.sizes?.card?.url || photo.url, alt: photo.alt ?? d.name } : null,
+            photo: photoUrl ? { url: photoUrl, alt: photo?.alt ?? d.name } : null,
             category: c.slug,
           }
         }),
@@ -85,6 +107,11 @@ export const getSettings = cache(async (locale: Locale): Promise<SiteSettings> =
     lat: s.lat ?? 40.1792,
     lng: s.lng ?? 44.5133,
     hours: (s.hours ?? []).map((h) => ({ open: h.open ?? '11:00', close: h.close ?? '02:00', closed: Boolean(h.closed) })),
+    closures: (s.closures ?? []).map((c) => ({ from: yerevanDate(c.from), to: yerevanDate(c.to), note: c.note ?? '' })),
+    paused: Boolean(s.ordersPaused),
+    pauseNote: s.pauseNote ?? '',
+    lastOrderMinutes: s.lastOrderMinutes ?? 30,
+    paymentMethods: s.paymentMethods?.length ? s.paymentMethods : ['cash'],
     deliveryFee: s.deliveryFee ?? 0,
     freeDeliveryFrom: s.freeDeliveryFrom ?? null,
     partners: (s.partners ?? []).map((x) => ({ name: x.name, url: x.url })),

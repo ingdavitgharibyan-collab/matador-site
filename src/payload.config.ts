@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url'
 import { Categories } from './collections/Categories'
 import { Dishes } from './collections/Dishes'
 import { Media } from './collections/Media'
+import { Orders } from './collections/Orders'
 import { Users } from './collections/Users'
 import { migrations } from './migrations'
 import { Settings } from './globals/Settings'
@@ -48,6 +49,7 @@ export default buildConfig({
     meta: { titleSuffix: ' · Matador admin' },
     // no gravatar requests from the admin
     avatar: 'default',
+    components: { beforeDashboard: ['/components/admin/TodayPanel#TodayPanel'] },
   },
   i18n: {
     supportedLanguages: { hy, ru, en },
@@ -62,7 +64,7 @@ export default buildConfig({
     defaultLocale: 'hy',
     fallback: true,
   },
-  collections: [Categories, Dishes, Media, Users],
+  collections: [Orders, Dishes, Categories, Media, Users],
   globals: [Settings],
   graphQL: { disable: true },
   secret: process.env.PAYLOAD_SECRET || '',

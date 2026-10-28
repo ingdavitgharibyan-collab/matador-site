@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
 const locales = ['hy', 'ru', 'en']
-const ownTop = new Set(['admin', 'api', 'health', '_next'])
+const ownTop = new Set(['admin', 'api', 'health', 'telegram', '_next'])
 
 /** Browser language by q-value, falling back to Armenian. */
 function pickLocale(accept: string) {

@@ -17,8 +17,15 @@ Restaurant site with an editable menu, ordering by WhatsApp / Telegram / phone, 
 - **Printable QR cards**: `/hy/qr` (general) and `/hy/qr?table=5` (per table: the ticket opens in "Table 5" mode,
   no address or delivery fee). Same for `/ru` and `/en`.
 - **SEO**: per-language metadata and hreflang, schema.org Restaurant + Menu, sitemap, robots, OG image.
-- **Admin** at `/admin` (Payload): dishes (photo, price, weight, spicy, house pick, availability), categories,
-  contacts, hours, delivery settings — each text in three languages.
+- **Orders are recorded** before any chat opens: number per business day (`M-2810-007`), prices recomputed on the
+  server, statuses (new → accepted → cooking → ready/out → delivered), a status page for the guest (`/hy/o/<token>`),
+  anti-spam (honeypot, timing, per-IP/phone limits).
+- **Kitchen bot (Telegram)**: every order goes to the kitchen group with Accept / Reject / Ready / Out / Delivered
+  buttons; `/pause`, `/resume`, `/stop` (stop-list buttons), `/back`, `/today`.
+- **Admin** at `/admin` (Payload), in Armenian, Russian or English: today's panel (orders, revenue, waiting, top
+  dishes), orders, dishes (choices, diet flags, allergens, photo, stop-list), categories, staff with roles
+  (owner / manager / kitchen — the kitchen can only switch availability), settings with weekday rows, holidays,
+  pause, payment methods, delivery zones; version history for dishes and settings.
 - **Motion**: GSAP + ScrollTrigger + SplitText, Lenis smooth scroll; all off under `prefers-reduced-motion`.
 
 ## Run locally
@@ -45,7 +52,10 @@ CI (`.github/workflows/ci.yml`) runs typecheck, lint, unit, the build guard, the
 4. Uptime: point a monitor at `https://<domain>/health` (200 = app and database answer).
 5. Backups: `docker compose exec site node scripts/backup.mjs` nightly (cron), then copy `/data/backups` off the
    server. Rehearse `scripts/restore.md` once before launch.
-6. Password reset: set `SMTP_*` for e-mail resets, or run `npx tsx scripts/reset-password.ts <email> <new password>`.
+6. Kitchen bot: create a bot with @BotFather, add it to the kitchen group, put `TELEGRAM_BOT_TOKEN`,
+   `TELEGRAM_CHAT_ID` (the group id) and a random `TELEGRAM_WEBHOOK_SECRET` in `.env`, then
+   `node --env-file=.env scripts/telegram-setup.mjs`.
+7. Password reset: set `SMTP_*` for e-mail resets, or run `npx tsx scripts/reset-password.ts <email> <new password>`.
 
 Changing collections: `npm run payload migrate:create <name>`; migrations run on boot.
 

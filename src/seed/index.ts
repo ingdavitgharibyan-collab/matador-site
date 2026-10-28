@@ -107,7 +107,7 @@ export async function ensureAdmin(payload: Payload) {
   if (users.totalDocs > 0) return
   const { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env
   if (ADMIN_EMAIL && ADMIN_PASSWORD) {
-    await payload.create({ collection: 'users', data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD } })
+    await payload.create({ collection: 'users', data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, role: 'owner' } })
     payload.logger.info(`Admin user ${ADMIN_EMAIL} created from the environment.`)
     return
   }

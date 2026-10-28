@@ -7,17 +7,29 @@ import type { MenuDish, SiteSettings } from '@/lib/data'
 import { canOrder, type OrderGate } from '@/lib/hours'
 import { type Dict, fill, formatPrice } from '@/lib/i18n'
 import { defaultOpts, needsChoice } from '@/lib/menu'
+import { placeOrder } from '@/app/(site)/actions'
 import { normalizePhone, orderMessage, orderRef } from '@/lib/order'
+import { quote } from '@/lib/pricing'
 import { type Line, MAX_QTY, useCart } from './cart'
 import { IconCheck, IconClose, IconMinus, IconPhone, IconPlus, IconTelegram, IconWhatsapp } from './icons'
 
 const FORM_KEY = 'matador-ticket-form-v1'
 type Field = 'name' | 'phone' | 'address'
-type Sent = { ref: string; lines: { name: string; qty: number }[]; total: number; channel: string }
+type Sent = { ref: string; lines: { name: string; qty: number }[]; total: number; channel: string; token?: string }
 
 const TABLE_KEY = 'matador-table'
 
-export function Ticket({ t, settings, drinks = [] }: { t: Dict; settings: SiteSettings; drinks?: MenuDish[] }) {
+export function Ticket({
+  t,
+  lang,
+  settings,
+  drinks = [],
+}: {
+  t: Dict
+  lang: string
+  settings: SiteSettings
+  drinks?: MenuDish[]
+}) {
   const cart = useCart()
   const ref = useRef<HTMLDialogElement>(null)
   const id = useId()
@@ -34,10 +46,13 @@ export function Ticket({ t, settings, drinks = [] }: { t: Dict; settings: SiteSe
   const [undo, setUndo] = useState<{ lines: Line[] } | null>(null)
   const [now, setNow] = useState(() => new Date())
   const sending = useRef(false)
+  const openedAt = useRef(0)
+  const [busy, setBusy] = useState(false)
   const focusAfterRemove = useRef<number | null>(null)
   const linesRef = useRef<HTMLUListElement>(null)
   const emptyRef = useRef<HTMLAnchorElement>(null)
   const undoRef = useRef<HTMLButtonElement>(null)
+  const honeypot = useRef<HTMLInputElement>(null)
 
   // ---------------------------------------------------------------- lifecycle
   /* eslint-disable react-hooks/set-state-in-effect -- restore the guest's details and table once, from storage */
@@ -75,6 +90,7 @@ export function Ticket({ t, settings, drinks = [] }: { t: Dict; settings: SiteSe
     if (!d) return
     if (cart.isOpen && !d.open) {
       d.showModal()
+      openedAt.current = performance.now()
       setNow(new Date())
     }
     if (!cart.isOpen && d.open) d.close()
@@ -126,13 +142,7 @@ export function Ticket({ t, settings, drinks = [] }: { t: Dict; settings: SiteSe
     return fill(t.status.closedNote, { n: s && !s.open && s.closureNote ? `. ${s.closureNote}` : '' })
   })()
 
-  const zone = settings.zones.find((z) => z.id === zoneId) ?? null
-  const baseFee = zone ? zone.fee : settings.deliveryFee
-  const freeFrom = zone ? zone.freeFrom : settings.freeDeliveryFrom
-  const minOrder = mode === 'delivery' && zone ? zone.minOrder : 0
-  const fee = mode !== 'delivery' || cart.subtotal === 0 ? 0 : freeFrom && cart.subtotal >= freeFrom ? 0 : baseFee
-  const total = cart.subtotal + fee
-  const belowMin = minOrder > 0 && cart.subtotal < minOrder
+  const { zone, fee, freeFrom, minOrder, belowMin, total } = quote(cart.subtotal, mode, settings, zoneId)
   const hasDrink = cart.lines.some((l) => l.dish.category === 'drinks')
   const offer = hasDrink ? [] : drinks.filter((d) => d.available && !needsChoice(d)).slice(0, 3)
 
@@ -183,35 +193,91 @@ export function Ticket({ t, settings, drinks = [] }: { t: Dict; settings: SiteSe
     return { draft, text: orderMessage(draft, t) }
   }
 
-  const markSent = (r: string, channel: string) => {
+  const markSent = (r: string, channel: string, token?: string, sum = total) => {
     cart.rememberOrder()
-    setSent({ ref: r, lines: cart.lines.map((l) => ({ name: l.label, qty: l.qty })), total, channel })
+    setSent({ ref: r, lines: cart.lines.map((l) => ({ name: l.label, qty: l.qty })), total: sum, channel, token })
   }
 
-  const sendWa = () => {
+  /** Records the order on the server (prices, rules, number) and returns the text to send, or null after showing why. */
+  const submit = async (channel: 'whatsapp' | 'telegram', p: NonNullable<ReturnType<typeof prepare>>, elapsed: number) => {
+    setBusy(true)
+    try {
+      const r = await placeOrder({
+        lang,
+        lines: cart.lines.map((l) => ({ id: l.id, qty: l.qty, opts: l.opts })),
+        mode,
+        table,
+        zoneId,
+        payment: pay,
+        name: form.name,
+        phone: p.draft.phone,
+        address: form.address,
+        flat: form.flat,
+        note: form.note,
+        channel,
+        website: honeypot.current?.value ?? '',
+        elapsed,
+      })
+      if (r.ok) return r
+      const msg: Record<string, string> = {
+        closed: gateText || t.ticket.tryAgain,
+        paused: fill(t.ticket.gatePaused, { n: '' }),
+        last: fill(t.ticket.gateLast, { m: settings.lastOrderMinutes }),
+        min: fill(t.ticket.minOrder, { p: formatPrice(minOrder), r: formatPrice(Math.max(0, minOrder - cart.subtotal)) }),
+        rate: t.ticket.tooMany,
+        invalid: t.ticket.fix,
+        empty: t.ticket.empty,
+        spam: t.ticket.tryAgain,
+      }
+      setFormError(msg[r.error] ?? t.ticket.tryAgain)
+      setNow(new Date())
+      return null
+    } catch {
+      // the server could not be reached: still let the guest send the order, it just is not recorded
+      return { ok: true as const, ref: p.draft.ref, token: '', total, message: p.text }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const sendWa = async (e: React.SyntheticEvent) => {
     // a double tap must not open two chats
     if (!gate.ok || sending.current) return
     const p = prepare()
     if (!p) return
     sending.current = true
     window.setTimeout(() => (sending.current = false), 2500)
-    window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(p.text)}`, '_blank', 'noopener')
-    markSent(p.draft.ref, 'WhatsApp')
+    // open the window inside the tap (pop-up blockers), fill it once the order is recorded
+    const w = window.open('', '_blank')
+    const r = await submit('whatsapp', p, e.timeStamp - openedAt.current)
+    if (!r) {
+      w?.close()
+      return
+    }
+    const url = `https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(r.message)}`
+    if (w) {
+      w.opener = null
+      w.location.href = url
+    } else window.open(url, '_blank', 'noopener')
+    markSent(r.ref, 'WhatsApp', r.token, r.total)
   }
 
-  const sendTg = async () => {
-    if (!gate.ok) return
+  const sendTg = async (e: React.SyntheticEvent) => {
+    if (!gate.ok || sending.current) return
     const p = prepare()
     if (!p) return
+    sending.current = true
+    window.setTimeout(() => (sending.current = false), 2500)
+    const r = await submit('telegram', p, e.timeStamp - openedAt.current)
+    if (!r) return
     let ok = false
     try {
-      await navigator.clipboard.writeText(p.text)
+      await navigator.clipboard.writeText(r.message)
       ok = true
     } catch {}
-    setTg({ ok, text: p.text })
+    setTg({ ok, text: r.message })
     // the chat opens from a real link the guest taps next (no pop-up after an await: iOS blocks those)
-    setSent({ ref: p.draft.ref, lines: cart.lines.map((l) => ({ name: l.label, qty: l.qty })), total, channel: 'Telegram' })
-    cart.rememberOrder()
+    markSent(r.ref, 'Telegram', r.token, r.total)
   }
 
   const phoneHref = `tel:${settings.phone.replace(/[^\d+]/g, '')}`
@@ -337,6 +403,11 @@ export function Ticket({ t, settings, drinks = [] }: { t: Dict; settings: SiteSe
                 </div>
               )}
               <p>{t.ticket.sentLead}</p>
+              {sent.token && (
+                <a className="btn btn--ghost" href={`/${lang}/o/${sent.token}`}>
+                  {t.ticket.track}
+                </a>
+              )}
               <div className="stub__actions">
                 <button
                   type="button"
@@ -463,7 +534,7 @@ export function Ticket({ t, settings, drinks = [] }: { t: Dict; settings: SiteSe
                 id={formId}
                 onSubmit={(e) => {
                   e.preventDefault()
-                  sendWa()
+                  void sendWa(e)
                 }}
                 noValidate
               >
@@ -544,6 +615,8 @@ export function Ticket({ t, settings, drinks = [] }: { t: Dict; settings: SiteSe
                   <label htmlFor={`${id}-note`}>{t.ticket.note}</label>
                   <textarea {...field('note')} placeholder={t.ticket.notePh} maxLength={500} enterKeyHint="send" />
                 </div>
+                {/* bots fill every field; people never see this one */}
+                <input ref={honeypot} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp" defaultValue="" />
                 <p className="ticket__fine">{t.ticket.notice}</p>
               </form>
 
@@ -570,12 +643,12 @@ export function Ticket({ t, settings, drinks = [] }: { t: Dict; settings: SiteSe
             )}
             <div className="ticket__actions">
               {settings.whatsapp && (
-                <button type="submit" form={formId} className="btn btn--red" disabled={!gate.ok}>
+                <button type="submit" form={formId} className="btn btn--red" disabled={!gate.ok || busy} aria-busy={busy}>
                   <IconWhatsapp /> {t.ticket.sendWa}
                 </button>
               )}
               {settings.telegram && (
-                <button type="button" className="btn btn--ink btn--square" onClick={sendTg} disabled={!gate.ok} aria-label={t.ticket.sendTg} title={t.ticket.sendTg}>
+                <button type="button" className="btn btn--ink btn--square" onClick={sendTg} disabled={!gate.ok || busy} aria-label={t.ticket.sendTg} title={t.ticket.sendTg}>
                   <IconTelegram />
                 </button>
               )}

@@ -186,7 +186,7 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
         </div>
       </footer>
 
-      <LazyTicket t={t} settings={s} drinks={menu.find((c) => c.slug === 'drinks')?.dishes ?? []} />
+      <LazyTicket t={t} lang={lang} settings={s} drinks={menu.find((c) => c.slug === 'drinks')?.dishes ?? []} />
       <LazyMotion />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(lang, menu, s, t) }} />
     </>

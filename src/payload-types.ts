@@ -67,8 +67,9 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    categories: Category;
+    orders: Order;
     dishes: Dish;
+    categories: Category;
     media: Media;
     users: User;
     'payload-kv': PayloadKv;
@@ -78,8 +79,9 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     dishes: DishesSelect<false> | DishesSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -127,14 +129,55 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
+ * via the `definition` "orders".
  */
-export interface Category {
+export interface Order {
   id: number;
-  name: string;
-  slug: string;
-  tagline?: string | null;
-  order?: number | null;
+  ref: string;
+  status: 'new' | 'accepted' | 'cooking' | 'ready' | 'out' | 'delivered' | 'cancelled' | 'rejected';
+  total: number;
+  mode: 'delivery' | 'pickup' | 'table';
+  table?: string | null;
+  zone?: string | null;
+  payment?: string | null;
+  name?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  flat?: string | null;
+  note?: string | null;
+  lines?:
+    | {
+        qty?: number | null;
+        label?: string | null;
+        unit?: number | null;
+        dish?: string | null;
+        opts?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  subtotal?: number | null;
+  fee?: number | null;
+  channel?: string | null;
+  lang?: string | null;
+  statusLog?:
+    | {
+        status?: string | null;
+        at?: string | null;
+        by?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  token?: string | null;
+  kitchenMessageId?: string | null;
+  ipHash?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -151,44 +194,35 @@ export interface Dish {
    * Comma-separated
    */
   ingredients?: string | null;
-  /**
-   * AMD
-   */
   price: number;
   /**
-   * e.g. 350 g, 0.5 L
+   * 350 g, 0.5 L
    */
   weight?: string | null;
+  /**
+   * Smaller shows first
+   */
   order?: number | null;
-  spicy?: boolean | null;
   /**
-   * House favourite
+   * Untick when sold out (stop-list)
    */
-  signature?: boolean | null;
   available?: boolean | null;
-  /**
-   * Pork, bacon or pork fat
-   */
+  spicy?: boolean | null;
+  signature?: boolean | null;
   containsPork?: boolean | null;
   vegetarian?: boolean | null;
   allergens?: ('gluten' | 'milk' | 'egg' | 'sesame' | 'mustard' | 'nuts' | 'soy' | 'celery')[] | null;
   /**
-   * Choices the guest makes: bread (one of), sauce (one of), "without…" or extras (several). The first option of a required one-of group is preselected.
+   * Bread (one of), sauce (one of), "without…" or extras (several). The first option of a required group is preselected.
    */
   optionGroups?:
     | {
         name: string;
-        /**
-         * Several may be picked
-         */
         multi?: boolean | null;
         required?: boolean | null;
         options?:
           | {
               name: string;
-              /**
-               * Extra AMD, 0 = free
-               */
               price?: number | null;
               id?: string | null;
             }[]
@@ -197,13 +231,32 @@ export interface Dish {
       }[]
     | null;
   /**
-   * Real photo of the dish; replaces the drawing
+   * A real photo; replaces the drawing
    */
   photo?: (number | null) | Media;
   /**
-   * Drawing used when there is no photo
+   * Used when there is no photo
    */
   art?: ('shawarma' | 'plate' | 'burger' | 'skewer' | 'ribs' | 'fries' | 'salad' | 'drink' | 'sauce') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  name: string;
+  /**
+   * e.g. shawarma, drinks
+   */
+  slug: string;
+  tagline?: string | null;
+  /**
+   * Smaller shows first
+   */
+  order?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -250,6 +303,7 @@ export interface Media {
  */
 export interface User {
   id: number;
+  role: 'owner' | 'manager' | 'kitchen';
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -295,12 +349,16 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'categories';
-        value: number | Category;
+        relationTo: 'orders';
+        value: number | Order;
       } | null)
     | ({
         relationTo: 'dishes';
         value: number | Dish;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
       } | null)
     | ({
         relationTo: 'media';
@@ -354,13 +412,46 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories_select".
+ * via the `definition` "orders_select".
  */
-export interface CategoriesSelect<T extends boolean = true> {
+export interface OrdersSelect<T extends boolean = true> {
+  ref?: T;
+  status?: T;
+  total?: T;
+  mode?: T;
+  table?: T;
+  zone?: T;
+  payment?: T;
   name?: T;
-  slug?: T;
-  tagline?: T;
-  order?: T;
+  phone?: T;
+  address?: T;
+  flat?: T;
+  note?: T;
+  lines?:
+    | T
+    | {
+        qty?: T;
+        label?: T;
+        unit?: T;
+        dish?: T;
+        opts?: T;
+        id?: T;
+      };
+  subtotal?: T;
+  fee?: T;
+  channel?: T;
+  lang?: T;
+  statusLog?:
+    | T
+    | {
+        status?: T;
+        at?: T;
+        by?: T;
+        id?: T;
+      };
+  token?: T;
+  kitchenMessageId?: T;
+  ipHash?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -376,9 +467,9 @@ export interface DishesSelect<T extends boolean = true> {
   price?: T;
   weight?: T;
   order?: T;
+  available?: T;
   spicy?: T;
   signature?: T;
-  available?: T;
   containsPork?: T;
   vegetarian?: T;
   allergens?: T;
@@ -399,6 +490,18 @@ export interface DishesSelect<T extends boolean = true> {
       };
   photo?: T;
   art?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  tagline?: T;
+  order?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -449,6 +552,7 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -514,7 +618,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 export interface Setting {
   id: number;
   /**
-   * International format, +374…
+   * +374 …
    */
   phone: string;
   /**
@@ -528,10 +632,13 @@ export interface Setting {
   instagram?: string | null;
   facebook?: string | null;
   address: string;
+  /**
+   * Right-click the spot in Google Maps, first number
+   */
   lat: number;
   lng: number;
   /**
-   * Rows are Monday → Sunday. Closing after midnight is fine (11:00 → 02:00). Same open and close time = open 24 h.
+   * Closing after midnight is fine (11:00 → 02:00). Same open and close time = open 24 h.
    */
   hours?:
     | {
@@ -542,74 +649,50 @@ export interface Setting {
       }[]
     | null;
   /**
-   * Holidays and one-off closures. The site shows "closed" and blocks orders on these days.
+   * On these days the site shows "closed" and takes no orders.
    */
   closures?:
     | {
         from: string;
         to: string;
-        /**
-         * Shown to guests, e.g. "Closed for New Year"
-         */
         note?: string | null;
         id?: string | null;
       }[]
     | null;
   /**
-   * Stop taking orders right now (kitchen overloaded, outage). Calls stay possible.
+   * Kitchen overloaded or an outage. Calls stay possible.
    */
   ordersPaused?: boolean | null;
-  /**
-   * Stop taking orders this many minutes before closing
-   */
   lastOrderMinutes?: number | null;
-  /**
-   * Optional reason shown while paused
-   */
   pauseNote?: string | null;
   paymentMethods?: ('cash' | 'card_courier' | 'idram' | 'telcell' | 'transfer')[] | null;
   /**
-   * Where you deliver. The guest picks one; its fee, minimum and time are shown before sending.
+   * The guest picks a zone and sees its fee, minimum order and time.
    */
   deliveryZones?:
     | {
-        /**
-         * e.g. Kentron, Arabkir
-         */
         name: string;
-        /**
-         * AMD
-         */
         fee?: number | null;
-        /**
-         * AMD
-         */
         minOrder?: number | null;
-        /**
-         * AMD, empty = never free
-         */
         freeFrom?: number | null;
         /**
-         * minutes
+         * min
          */
         etaMin?: number | null;
         /**
-         * minutes
+         * min
          */
         etaMax?: number | null;
         id?: string | null;
       }[]
     | null;
   /**
-   * AMD, used when no zones are set
+   * ֏
    */
   deliveryFee?: number | null;
-  /**
-   * AMD, used when no zones are set
-   */
   freeDeliveryFrom?: number | null;
   /**
-   * Delivery services: paste Matador's own store page, not the service's home page
+   * Paste Matador's own page on the service, not its home page
    */
   partners?:
     | {

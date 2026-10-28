@@ -12,8 +12,8 @@ async function boot(page: Page, { at = OPEN, clipboard = true }: { at?: Date; cl
   await page.addInitScript((clip) => {
     const w = window as unknown as { __opened: string[] }
     w.__opened = []
-    window.open = ((u: string) => {
-      w.__opened.push(String(u))
+    window.open = ((u?: string) => {
+      if (u) w.__opened.push(String(u))
       return null
     }) as typeof window.open
     if (!clip) {
@@ -64,11 +64,14 @@ test('new customer orders by WhatsApp, gets a ticket stub, and can repeat the or
 
   await fillTicket(page)
   await ticket.locator('.ticket__foot .btn--red').dblclick()
+  // the order is recorded on the server first, then the chat opens; a double tap opens one chat
+  await expect.poll(() => opened(page)).toHaveLength(1)
+  await page.waitForTimeout(500)
   const urls = await opened(page)
-  expect(urls).toHaveLength(1) // a double tap opens one chat
+  expect(urls).toHaveLength(1)
   const text = decodeURIComponent(urls[0].split('text=')[1]).replace(/\u00a0/g, ' ')
   expect(urls[0]).toMatch(/^https:\/\/wa\.me\/\d+\?text=/)
-  expect(text).toMatch(/Պատվեր M-2810-1400/)
+  expect(text).toMatch(/Պատվեր M-\d{4}-\d{3}/)
   expect(text).toContain('+374 91 123456')
   expect(text).toContain('• 2 × Հավով շաուրմա (Հաց: պիտա; Սոուս: սխտորով; Առանց: սոխի; Ավելացնել: չեդեր) — 3 600 ֏')
   expect(text).toContain('Կենտրոն')
@@ -76,7 +79,8 @@ test('new customer orders by WhatsApp, gets a ticket stub, and can repeat the or
   expect(text).toContain('Կանխիկ')
 
   // stub, then a fresh ticket
-  await expect(ticket.locator('.stub__ref')).toContainText('M-2810-1400')
+  await expect(ticket.locator('.stub__ref')).toContainText(/M-\d{4}-\d{3}/)
+  await expect(ticket.getByRole('link', { name: 'Հետևել պատվերին' })).toHaveAttribute('href', /\/hy\/o\//)
   await ticket.getByRole('button', { name: /Նոր պատվեր/ }).click()
   await expect(page.locator('.ticket-btn__count')).toContainText('0')
   await page.reload()
@@ -112,7 +116,7 @@ test('Telegram: a failed copy is reported and the text is offered to copy by han
   await page.locator('.ticket__foot .btn--ink').click()
   const ticket = page.locator('dialog.ticket')
   await expect(ticket.locator('.ticket__msg[data-kind=error]')).toBeVisible()
-  await expect(ticket.locator('.tg__text')).toHaveValue(/M-2810-1400/)
+  await expect(ticket.locator('.tg__text')).toHaveValue(/M-\d{4}-\d{3}/)
   await expect(ticket.getByRole('link', { name: /Telegram/ })).toHaveAttribute('href', /^https:\/\/t\.me\//)
 })
 
@@ -258,6 +262,7 @@ test('table QR: the order goes to the table, without address or delivery fee', a
   await expect(ticket.getByLabel(/^Հասցե/)).toHaveCount(0)
   await fillTicket(page, false)
   await ticket.locator('.ticket__foot .btn--red').click()
+  await expect.poll(() => opened(page)).toHaveLength(1)
   const text = decodeURIComponent((await opened(page))[0].split('text=')[1]).replace(/\u00a0/g, ' ')
   expect(text).toContain('Սեղան 5')
   expect(text).not.toContain('Առաքում')

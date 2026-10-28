@@ -99,3 +99,11 @@ export function canOrder(rules: OrderingRules, date = new Date()): OrderGate {
   if (!status.allDay && status.minutesLeft <= rules.lastOrderMinutes) return { ok: false, reason: 'last', status }
   return { ok: true, status }
 }
+
+/** Orders are numbered per business day: from 06:00 to 06:00 Yerevan time (a night shift stays one day). */
+export function businessDayStart(now = new Date()) {
+  const local = new Date(now.getTime() + OFFSET_MIN * 60_000)
+  if (local.getUTCHours() < 6) local.setUTCDate(local.getUTCDate() - 1)
+  local.setUTCHours(6, 0, 0, 0)
+  return new Date(local.getTime() - OFFSET_MIN * 60_000)
+}

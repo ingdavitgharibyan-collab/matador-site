@@ -59,6 +59,7 @@ const nextConfig: NextConfig = {
 }
 
 export default function config(phase: string) {
-  if (phase === PHASE_PRODUCTION_BUILD) assertPublicOrigin()
+  // `next typegen` loads this config in the build phase too; only a real build must carry the public origin
+  if (phase === PHASE_PRODUCTION_BUILD && !process.argv.includes('typegen')) assertPublicOrigin()
   return withPayload(nextConfig, { devBundleServerPackages: false })
 }

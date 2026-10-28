@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, test } from '@playwright/test'
 
-// Wednesday 14:00 in Yerevan: open. 04:30: closed (hours 11:00–02:00/03:00 in the sample settings).
+// Wednesday 14:00 in Yerevan: open. 04:30: closed (hours 10:00–00:00 in the sample settings).
 const OPEN = new Date('2026-10-28T14:00:00+04:00')
 const CLOSED = new Date('2026-10-29T04:30:00+04:00')
 
@@ -74,7 +74,7 @@ test('new customer orders by WhatsApp, gets a ticket stub, and can repeat the or
   expect(text).toMatch(/Պատվեր M-\d{4}-\d{3}/)
   expect(text).toContain('+374 91 123456')
   expect(text).toContain('• 2 × Հավով շաուրմա (Հաց: պիտա; Սոուս: սխտորով; Առանց: սոխի; Ավելացնել: չեդեր) — 3 600 ֏')
-  expect(text).toContain('Կենտրոն')
+  expect(text).toContain('Աշտարակ, 25–40′')
   expect(text).toContain('Ընդամենը: 4 700 ֏') // 3 600 + 600 tan + 500 delivery
   expect(text).toContain('Կանխիկ')
 
@@ -100,7 +100,7 @@ test('closed at night: the ticket says when we open and does not send', async ({
   await adds(page, 'sides').first().click()
   await page.locator('.ticket-btn').click()
   const ticket = page.locator('dialog.ticket')
-  await expect(ticket.getByRole('alert')).toContainText('today from 11:00')
+  await expect(ticket.getByRole('alert')).toContainText('today from 10:00')
   await expect(ticket.locator('.ticket__foot .btn--red')).toBeDisabled()
   await expect(ticket.locator('.gate a[href^="tel:"]')).toBeVisible()
   expect(await opened(page)).toHaveLength(0)

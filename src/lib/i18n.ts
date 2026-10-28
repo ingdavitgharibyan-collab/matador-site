@@ -8,7 +8,7 @@ export const localeLong: Record<Locale, string> = { hy: 'Հայերեն', ru: '�
 
 const hy = {
   meta: {
-    title: 'Մատադոր — շաուրմա, Angus բուրգերներ և BBQ Երևանում',
+    title: 'Մատադոր — ֆասթ ֆուդ Աշտարակում՝ շաուրմա, Angus բուրգերներ, BBQ',
     description:
       'Մատադորի մենյուն՝ շաուրմա, Angus բուրգերներ, խորոված և BBQ։ Պատվիրեք WhatsApp-ով, Telegram-ով կամ զանգով։',
   },
@@ -135,7 +135,7 @@ const hy = {
     title: 'Երեք կրակ մեկ խոհանոցում',
     body: [
       'Շամփուրը շաուրմայի համար է, գրիլը՝ Angus բուրգերների, իսկ ածուխը՝ խորովածի և կողիկների։',
-      'Մատադորը փողոցային խոհանոց է, որտեղ ամեն ուտեստ պատրաստվում է պատվերից հետո։',
+      'Մատադորը ֆասթ ֆուդ է, բայց ամեն ուտեստ պատրաստվում է պատվերից հետո։',
     ],
     alt: 'Մատադորը կարմիր մուլետայով, ոսկե ասեղնագործությամբ զգեստով',
   },
@@ -184,7 +184,7 @@ export type Dict = typeof hy
 
 const ru: Dict = {
   meta: {
-    title: 'Матадор — шаурма, бургеры Angus и BBQ в Ереване',
+    title: 'Матадор — фастфуд в Аштараке: шаурма, бургеры Angus, BBQ',
     description: 'Меню Матадора: шаурма, бургеры Angus, хоровац и BBQ. Заказ через WhatsApp, Telegram или по телефону.',
   },
   nav: { menu: 'Меню', house: 'О нас', visit: 'Адрес', order: 'Билет', skip: 'Перейти к содержимому', lang: 'Язык' },
@@ -310,7 +310,7 @@ const ru: Dict = {
     title: 'Три огня на одной кухне',
     body: [
       'Вертел — для шаурмы, гриль — для бургеров Angus, угли — для хороваца и рёбер.',
-      'Матадор — уличная кухня, где каждое блюдо готовят после заказа.',
+      'Матадор — фастфуд, но каждое блюдо готовят после заказа.',
     ],
     alt: 'Матадор с красной мулетой в костюме с золотой вышивкой',
   },
@@ -357,7 +357,7 @@ const ru: Dict = {
 
 const en: Dict = {
   meta: {
-    title: 'Matador — shawarma, Angus burgers and BBQ in Yerevan',
+    title: 'Matador — fast food in Ashtarak: shawarma, Angus burgers, BBQ',
     description: "Matador's menu: shawarma, Angus burgers, khorovats and BBQ. Order by WhatsApp, Telegram or phone.",
   },
   nav: { menu: 'Menu', house: 'About', visit: 'Find us', order: 'Ticket', skip: 'Skip to content', lang: 'Language' },
@@ -483,7 +483,7 @@ const en: Dict = {
     title: 'Three fires in one kitchen',
     body: [
       'The spit is for shawarma, the grill for Angus burgers, and the charcoal for khorovats and ribs.',
-      'Matador is a street kitchen where every dish is cooked after you order it.',
+      'Matador is fast food, yet every dish is cooked after you order it.',
     ],
     alt: 'The matador with a red muleta, in a suit embroidered with gold',
   },

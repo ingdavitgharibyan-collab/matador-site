@@ -19,7 +19,7 @@ test('search and AI surfaces: FAQ JSON-LD, llms.txt, printable menu, sitemap, ma
   await page.goto('/en')
   const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!)
   const types = ld['@graph'].map((x: { '@type': string }) => x['@type'])
-  expect(types).toEqual(['Restaurant', 'FAQPage'])
+  expect(types).toEqual(['FastFoodRestaurant', 'FAQPage'])
   expect(ld['@graph'][0]).toMatchObject({ paymentAccepted: expect.stringContaining('Cash'), hasMenu: { url: expect.stringContaining('/en/menu') } })
   expect(ld['@graph'][1].mainEntity.length).toBeGreaterThanOrEqual(5)
   await expect(page.locator('#faq details')).toHaveCount(5)

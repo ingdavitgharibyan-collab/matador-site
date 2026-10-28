@@ -139,7 +139,7 @@ export const getSettings = cache(async (locale: Locale): Promise<SiteSettings> =
     address: s.address ?? '',
     lat: s.lat ?? 40.1792,
     lng: s.lng ?? 44.5133,
-    hours: (s.hours ?? []).map((h) => ({ open: h.open ?? '11:00', close: h.close ?? '02:00', closed: Boolean(h.closed) })),
+    hours: (s.hours ?? []).map((h) => ({ open: h.open ?? '10:00', close: h.close ?? '00:00', closed: Boolean(h.closed) })),
     closures: (s.closures ?? []).map((c) => ({ from: yerevanDate(c.from), to: yerevanDate(c.to), note: c.note ?? '' })),
     paused: Boolean(s.ordersPaused),
     pauseNote: s.pauseNote ?? '',

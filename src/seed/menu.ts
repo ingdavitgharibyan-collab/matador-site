@@ -377,13 +377,13 @@ export const settings = {
   instagram: 'https://instagram.com/',
   facebook: 'https://facebook.com/',
   address: {
-    hy: 'Երևան, Աբովյան փ. 1 (նմուշ)',
-    ru: 'Ереван, ул. Абовяна 1 (образец)',
-    en: 'Yerevan, 1 Abovyan St (sample)',
+    hy: 'Աշտարակ (հասցեն՝ նմուշ)',
+    ru: 'Аштарак (адрес — образец)',
+    en: 'Ashtarak (sample address)',
   },
-  lat: 40.1792,
-  lng: 44.5133,
-  hours: Array.from({ length: 7 }, (_, i) => ({ open: '11:00', close: i >= 4 ? '03:00' : '02:00', closed: false })),
+  lat: 40.299,
+  lng: 44.362,
+  hours: Array.from({ length: 7 }, () => ({ open: '10:00', close: '00:00', closed: false })),
   deliveryFee: 500,
   freeDeliveryFrom: 10000,
   partners: [
@@ -490,9 +490,9 @@ export const dishExtras: Record<
 }
 
 export const deliveryZones = [
-  { name: { hy: 'Կենտրոն', ru: 'Центр', en: 'Kentron' }, fee: 500, minOrder: 3000, freeFrom: 10000, etaMin: 30, etaMax: 45 },
+  { name: { hy: 'Աշտարակ', ru: 'Аштарак', en: 'Ashtarak' }, fee: 500, minOrder: 3000, freeFrom: 10000, etaMin: 25, etaMax: 40 },
   {
-    name: { hy: 'Արաբկիր, Նոր Նորք, Քանաքեռ', ru: 'Арабкир, Нор Норк, Канакер', en: 'Arabkir, Nor Nork, Kanaker' },
+    name: { hy: 'Մուղնի, Օշական, Փարպի', ru: 'Мугни, Ошакан, Парпи', en: 'Mughni, Oshakan, Parpi' },
     fee: 900,
     minOrder: 5000,
     freeFrom: 15000,

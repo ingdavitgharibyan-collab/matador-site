@@ -80,8 +80,8 @@ const fields: Field[] = [
               {
                 type: 'row',
                 fields: [
-                  { name: 'open', label: L('Բացվում է', 'Открытие', 'Opens'), type: 'text', defaultValue: '11:00', validate: time },
-                  { name: 'close', label: L('Փակվում է', 'Закрытие', 'Closes'), type: 'text', defaultValue: '02:00', validate: time },
+                  { name: 'open', label: L('Բացվում է', 'Открытие', 'Opens'), type: 'text', defaultValue: '10:00', validate: time },
+                  { name: 'close', label: L('Փակվում է', 'Закрытие', 'Closes'), type: 'text', defaultValue: '00:00', validate: time },
                   { name: 'closed', label: L('Փակ է ամբողջ օրը', 'Выходной', 'Closed all day'), type: 'checkbox', defaultValue: false },
                 ],
               },

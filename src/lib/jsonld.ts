@@ -19,7 +19,7 @@ export function jsonLd(lang: Locale, menu: MenuCategory[], s: SiteSettings, t: D
   const base = siteUrl()
   const url = `${base}/${lang}`
   const restaurant = {
-    '@type': 'Restaurant',
+    '@type': 'FastFoodRestaurant',
     '@id': `${base}/#restaurant`,
     name: 'Matador',
     alternateName: ['Մատադոր', 'Матадор'],
@@ -28,11 +28,11 @@ export function jsonLd(lang: Locale, menu: MenuCategory[], s: SiteSettings, t: D
     image: `${base}/brand/logo.webp`,
     logo: `${base}/brand/bull.webp`,
     telephone: s.phone,
-    servesCuisine: ['Shawarma', 'Burgers', 'Barbecue', 'Armenian'],
+    servesCuisine: ['Fast food', 'Shawarma', 'Burgers', 'Barbecue', 'Armenian'],
     priceRange: '֏֏',
     currenciesAccepted: 'AMD',
     paymentAccepted: s.paymentMethods.map((m) => PAY_EN[m] ?? m).join(', '),
-    address: { '@type': 'PostalAddress', streetAddress: s.address, addressLocality: 'Yerevan', addressCountry: 'AM' },
+    address: { '@type': 'PostalAddress', streetAddress: s.address, addressLocality: 'Ashtarak', addressRegion: 'Aragatsotn', addressCountry: 'AM' },
     geo: { '@type': 'GeoCoordinates', latitude: s.lat, longitude: s.lng },
     hasMap: s.googleMapsUrl || `https://www.google.com/maps?q=${s.lat},${s.lng}`,
     areaServed: s.zones.map((z) => ({ '@type': 'Place', name: z.name })),

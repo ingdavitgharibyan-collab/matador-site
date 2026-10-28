@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { expect, type APIRequestContext, type Page, test } from '@playwright/test'
 
 /*
@@ -91,7 +92,7 @@ test('the kitchen accepts from Telegram; the guest sees it; the bot pauses and r
   expect((await (await request.get('/api/globals/settings')).json()).ordersPaused).toBe(false)
 })
 
-test('roles: the kitchen can only switch availability; a category with dishes cannot be deleted', async ({ request }) => {
+test('roles: the kitchen can only switch availability; a category with dishes cannot be deleted', async ({ page, request }) => {
   const auth = await login(request)
   const email = `kitchen-${Date.now()}@matador.test`
   const created = await request.post('/api/users', { headers: auth, data: { email, password: 'kitchen-pass-123', role: 'kitchen' } })
@@ -103,6 +104,12 @@ test('roles: the kitchen can only switch availability; a category with dishes ca
   expect((await (await request.get('/api/dishes/1?depth=0')).json()).price).toBe(before.price)
   expect((await request.patch('/api/dishes/1', { headers: kitchen, data: { available: false } })).ok()).toBe(true)
   expect((await (await request.get('/api/dishes/1?depth=0')).json()).available).toBe(false)
+  // the guest sees it as unavailable, and its text stays readable
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/hy')
+  await expect(page.locator('.dish[data-off="true"]')).toHaveCount(1)
+  const contrast = await new AxeBuilder({ page }).include('.dish[data-off="true"]').withRules(['color-contrast']).analyze()
+  expect(contrast.violations).toEqual([])
   await request.patch('/api/dishes/1', { headers: kitchen, data: { available: true } })
   expect((await request.patch('/api/globals/settings', { headers: kitchen, data: { phone: '+374 00 000000' } })).ok()).toBe(false)
 

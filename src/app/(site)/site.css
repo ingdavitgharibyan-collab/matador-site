@@ -736,8 +736,10 @@ html {
 .add[data-done='true'] {
   background: var(--barrera);
 }
-.dish[data-off='true'] {
-  opacity: 0.55;
+/* an unavailable dish dims its picture only: the text keeps full contrast (WCAG 1.4.3) */
+.dish[data-off='true'] .dish__art {
+  opacity: 0.45;
+  filter: grayscale(1);
 }
 @media (max-width: 960px) {
   .menu__grid {

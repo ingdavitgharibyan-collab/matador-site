@@ -8,14 +8,14 @@ export const localeLong: Record<Locale, string> = { hy: 'Հայերեն', ru: '�
 
 const hy = {
   meta: {
-    title: 'Մատադոր — ֆասթ ֆուդ Աշտարակում՝ շաուրմա, Angus բուրգերներ, BBQ',
+    title: 'Մատադոր — ֆասթ ֆուդ Աշտարակում՝ շաուրմա, քյաբաբ, BBQ, բուրգերներ',
     description:
-      'Մատադորի մենյուն՝ շաուրմա, Angus բուրգերներ, խորոված և BBQ։ Պատվիրեք WhatsApp-ով, Telegram-ով կամ զանգով։',
+      'Մատադորի մենյուն՝ շաուրմա, քյաբաբ, BBQ և բուրգերներ՝ հավի, խոզի, գառան, հնդկահավի և Angus տավարի մսով։ Պատվիրեք WhatsApp-ով, Telegram-ով կամ զանգով։',
   },
   nav: { menu: 'Մենյու', house: 'Մեր մասին', visit: 'Հասցե', order: 'Տոմս', skip: 'Անցնել բովանդակությանը', lang: 'Լեզու' },
   hero: {
-    title: 'Մատադոր՝ շաուրմա, բուրգեր, խորոված',
-    lead: 'Angus տավար, ածուխ և շամփուր։ Ընտրեք մենյուից, լրացրեք տոմսը և ուղարկեք WhatsApp-ով, Telegram-ով կամ զանգով։',
+    title: 'Մատադոր՝ շաուրմա, քյաբաբ, բուրգեր',
+    lead: 'Թարմ միս, ածուխ և շամփուր։ Ընտրեք մենյուից, լրացրեք տոմսը և ուղարկեք WhatsApp-ով, Telegram-ով կամ զանգով։',
     cta: 'Բացել մենյուն',
     call: 'Զանգել',
   },
@@ -134,8 +134,8 @@ const hy = {
   house: {
     title: 'Երեք կրակ մեկ խոհանոցում',
     body: [
-      'Շամփուրը շաուրմայի համար է, գրիլը՝ Angus բուրգերների, իսկ ածուխը՝ խորովածի և կողիկների։',
-      'Մատադորը ֆասթ ֆուդ է, բայց ամեն ուտեստ պատրաստվում է պատվերից հետո։',
+      'Շամփուրը շաուրմայի համար է, ածուխը՝ քյաբաբի և BBQ-ի, իսկ գրիլը՝ բուրգերների։',
+      'Արագ սնունդ՝ առանց փոխզիջումների․ թարմ, ոչ սառեցված միս, առանց համի ուժեղացուցիչների, և ամեն ուտեստ՝ պատվերից հետո։',
     ],
     alt: 'Մատադորը կարմիր մուլետայով, ոսկե ասեղնագործությամբ զգեստով',
   },
@@ -184,13 +184,13 @@ export type Dict = typeof hy
 
 const ru: Dict = {
   meta: {
-    title: 'Матадор — фастфуд в Аштараке: шаурма, бургеры Angus, BBQ',
-    description: 'Меню Матадора: шаурма, бургеры Angus, хоровац и BBQ. Заказ через WhatsApp, Telegram или по телефону.',
+    title: 'Матадор — фастфуд в Аштараке: шаурма, кебаб, BBQ, бургеры',
+    description: 'Меню Матадора: шаурма, кебаб, BBQ и бургеры из курицы, свинины, баранины, индейки и говядины Angus. Заказ через WhatsApp, Telegram или по телефону.',
   },
   nav: { menu: 'Меню', house: 'О нас', visit: 'Адрес', order: 'Билет', skip: 'Перейти к содержимому', lang: 'Язык' },
   hero: {
-    title: 'Матадор: шаурма, бургеры, хоровац',
-    lead: 'Говядина Angus, угли и вертел. Выберите блюда, заполните билет и отправьте заказ в WhatsApp, Telegram или позвоните.',
+    title: 'Матадор: шаурма, кебаб, бургеры',
+    lead: 'Свежее мясо, угли и вертел. Выберите блюда, заполните билет и отправьте заказ в WhatsApp, Telegram или позвоните.',
     cta: 'Открыть меню',
     call: 'Позвонить',
   },
@@ -309,8 +309,8 @@ const ru: Dict = {
   house: {
     title: 'Три огня на одной кухне',
     body: [
-      'Вертел — для шаурмы, гриль — для бургеров Angus, угли — для хороваца и рёбер.',
-      'Матадор — фастфуд, но каждое блюдо готовят после заказа.',
+      'Вертел — для шаурмы, угли — для кебаба и BBQ, гриль — для бургеров.',
+      'Быстрая еда без компромиссов: свежее, не замороженное мясо, без усилителей вкуса, и каждое блюдо — после заказа.',
     ],
     alt: 'Матадор с красной мулетой в костюме с золотой вышивкой',
   },
@@ -357,13 +357,13 @@ const ru: Dict = {
 
 const en: Dict = {
   meta: {
-    title: 'Matador — fast food in Ashtarak: shawarma, Angus burgers, BBQ',
-    description: "Matador's menu: shawarma, Angus burgers, khorovats and BBQ. Order by WhatsApp, Telegram or phone.",
+    title: 'Matador — fast food in Ashtarak: shawarma, kebab, BBQ, burgers',
+    description: "Matador's menu: shawarma, kebab, BBQ and burgers with chicken, pork, lamb, turkey and Angus beef. Order by WhatsApp, Telegram or phone.",
   },
   nav: { menu: 'Menu', house: 'About', visit: 'Find us', order: 'Ticket', skip: 'Skip to content', lang: 'Language' },
   hero: {
-    title: 'Matador: shawarma, burgers, khorovats',
-    lead: 'Angus beef, charcoal and the spit. Pick from the menu, fill in your ticket and send it by WhatsApp, Telegram or phone.',
+    title: 'Matador: shawarma, kebab, burgers',
+    lead: 'Fresh meat, charcoal and the spit. Pick from the menu, fill in your ticket and send it by WhatsApp, Telegram or phone.',
     cta: 'Open the menu',
     call: 'Call us',
   },
@@ -482,8 +482,8 @@ const en: Dict = {
   house: {
     title: 'Three fires in one kitchen',
     body: [
-      'The spit is for shawarma, the grill for Angus burgers, and the charcoal for khorovats and ribs.',
-      'Matador is fast food, yet every dish is cooked after you order it.',
+      'The spit is for shawarma, the charcoal for kebab and BBQ, and the grill for burgers.',
+      'Fast food without compromise: fresh, never frozen meat, no flavour enhancers, and every dish cooked after you order it.',
     ],
     alt: 'The matador with a red muleta, in a suit embroidered with gold',
   },

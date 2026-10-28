@@ -30,7 +30,7 @@ test('search and AI surfaces: FAQ JSON-LD, llms.txt, printable menu, sitemap, ma
   expect(llms).toContain('Chicken shawarma')
   const menu = await page.goto('/hy/menu')
   expect(menu?.status()).toBe(200)
-  expect(await page.locator('.print-menu__list li').count()).toBeGreaterThanOrEqual(20)
+  expect(await page.locator('.print-menu__list li').count()).toBe(16)
   expect(await (await request.get('/sitemap.xml')).text()).toContain('/ru/menu')
   const manifest = await (await request.get('/manifest.webmanifest')).json()
   expect(manifest).toMatchObject({ short_name: 'Matador', display: 'standalone' })
@@ -53,7 +53,8 @@ test('a promo code discounts the ticket and the recorded order', async ({ page, 
     window.open = (() => null) as typeof window.open
   })
   await page.goto('/en')
-  await page.locator('#cat-burgers .add').first().click() // 3 200
+  await page.locator('#cat-burgers .add').nth(1).click() // Angus burger 2 500, twice
+  await page.locator('#cat-burgers .add').nth(1).click()
   await page.locator('.ticket-btn').click()
   const ticket = page.locator('dialog.ticket')
   await ticket.locator('.promo summary').click()
@@ -62,14 +63,14 @@ test('a promo code discounts the ticket and the recorded order', async ({ page, 
   await expect(ticket.locator('.promo .field__err')).toContainText('does not work')
   await ticket.locator('.promo__row input').fill(code.toLowerCase())
   await ticket.getByRole('button', { name: 'Apply' }).click()
-  await expect(ticket.locator('.sums')).toContainText('−320')
+  await expect(ticket.locator('.sums')).toContainText('−500')
   await page.getByLabel('Phone', { exact: true }).fill('093 111222')
   await page.getByLabel('Name', { exact: true }).fill('Promo')
   await page.getByLabel('Address', { exact: true }).fill('Komitas 1')
   await ticket.locator('.ticket__foot .btn--red').click()
   const ref = (await ticket.locator('.stub__ref strong').textContent())!.trim()
   const o = (await (await request.get(`/api/orders?where[ref][equals]=${ref}&depth=0`, { headers: auth })).json()).docs[0]
-  expect(o).toMatchObject({ promo: code, discount: 320, total: 3200 - 320 + 500 })
+  expect(o).toMatchObject({ promo: code, discount: 500, total: 5000 - 500 + 500 })
   const p = (await (await request.get(`/api/promo-codes/${(await created.json()).doc.id}`, { headers: auth })).json())
   expect(p.uses).toBe(1)
 })

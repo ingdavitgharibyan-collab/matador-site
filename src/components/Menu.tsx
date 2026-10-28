@@ -113,6 +113,11 @@ export function Menu({ menu, t }: { menu: MenuCategory[]; t: Dict }) {
   const catsRef = useRef<HTMLElement>(null)
   const { add } = useCart()
   const byId = useMemo(() => new Map(menu.flatMap((c) => c.dishes).map((d) => [d.id, d])), [menu])
+  // offer a filter only when it can narrow the menu (no "spicy" chip on a menu without spicy dishes)
+  const offered = useMemo(() => {
+    const all = [...byId.values()]
+    return FILTERS.filter((f) => (f === 'noPork' ? all.some((d) => d.containsPork) : all.some((d) => passes(d, new Set([f]), ''))))
+  }, [byId])
 
   const q = query.trim().toLowerCase()
   const filtering = filters.size > 0 || q.length > 0
@@ -246,7 +251,7 @@ export function Menu({ menu, t }: { menu: MenuCategory[]; t: Dict }) {
               autoComplete="off"
             />
             <div className="chips" role="group" aria-label={t.menu.filters}>
-              {FILTERS.map((f) => (
+              {offered.map((f) => (
                 <button key={f} type="button" aria-pressed={filters.has(f)} onClick={() => toggle(f)}>
                   {f === 'spicy' && <IconChili />}
                   {filterLabel[f]}

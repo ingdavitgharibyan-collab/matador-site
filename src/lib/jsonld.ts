@@ -28,7 +28,7 @@ export function jsonLd(lang: Locale, menu: MenuCategory[], s: SiteSettings, t: D
     image: `${base}/brand/logo.webp`,
     logo: `${base}/brand/bull.webp`,
     telephone: s.phone,
-    servesCuisine: ['Fast food', 'Shawarma', 'Burgers', 'Barbecue', 'Armenian'],
+    servesCuisine: ['Fast food', 'Shawarma', 'Kebab', 'Barbecue', 'Burgers'],
     priceRange: '֏֏',
     currenciesAccepted: 'AMD',
     paymentAccepted: s.paymentMethods.map((m) => PAY_EN[m] ?? m).join(', '),

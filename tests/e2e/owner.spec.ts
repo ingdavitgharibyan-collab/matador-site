@@ -30,7 +30,8 @@ async function order(page: Page) {
     }) as typeof window.open
   })
   await page.goto('/en')
-  await page.locator('#cat-burgers .add').first().click() // Classic Angus 3 200
+  await page.locator('#cat-burgers .add').nth(1).click() // Angus burger 2 500, twice
+  await page.locator('#cat-burgers .add').nth(1).click()
   await page.locator('.ticket-btn').click()
   await page.getByLabel('Phone', { exact: true }).fill('099 555777')
   await page.getByLabel('Name', { exact: true }).fill('Ann')
@@ -50,8 +51,8 @@ test('an order is recorded with server prices and reaches the kitchen bot', asyn
   const auth = await login(request)
   const res = await request.get(`/api/orders?where[ref][equals]=${ref}&depth=0`, { headers: auth })
   const o = (await res.json()).docs[0]
-  expect(o).toMatchObject({ status: 'new', mode: 'delivery', subtotal: 3200, fee: 500, total: 3700, phone: '+374 99 555777' })
-  expect(o.lines[0]).toMatchObject({ qty: 1, unit: 3200 })
+  expect(o).toMatchObject({ status: 'new', mode: 'delivery', subtotal: 5000, fee: 500, total: 5500, phone: '+374 99 555777' })
+  expect(o.lines[0]).toMatchObject({ qty: 2, unit: 2500 })
   // anonymous visitors cannot read orders
   expect((await request.get('/api/orders')).status()).toBe(403)
 

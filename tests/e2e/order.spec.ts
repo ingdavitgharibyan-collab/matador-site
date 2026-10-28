@@ -39,9 +39,8 @@ test('new customer orders by WhatsApp, gets a ticket stub, and can repeat the or
   // shawarma has choices: the button opens the dish sheet
   await adds(page, 'shawarma').first().click()
   const sheet = page.locator('dialog.sheet')
-  await sheet.getByText('Պիտա', { exact: true }).click()
   await sheet.getByText('սոխի', { exact: true }).click()
-  await sheet.getByText('Չեդեր', { exact: true }).click()
+  await sheet.getByRole('button', { name: /Ավելացնել քանակը|Ավելացնել մեկը/ }).click()
   await sheet.getByRole('button', { name: /Ավելացնել քանակը|Ավելացնել մեկը/ }).click()
   await expect(sheet.locator('.sheet__add')).toContainText('3 600 ֏')
   await sheet.locator('.sheet__add').click()
@@ -49,7 +48,7 @@ test('new customer orders by WhatsApp, gets a ticket stub, and can repeat the or
   await page.locator('.cats a[href="#cat-drinks"]').click()
   await expect(page).toHaveURL(/#cat-drinks/)
   await adds(page, 'drinks').first().click()
-  await expect(page.locator('.ticket-btn__count')).toContainText('3')
+  await expect(page.locator('.ticket-btn__count')).toContainText('4')
 
   await page.locator('.ticket-btn').click()
   const ticket = page.locator('dialog.ticket')
@@ -73,9 +72,9 @@ test('new customer orders by WhatsApp, gets a ticket stub, and can repeat the or
   expect(urls[0]).toMatch(/^https:\/\/wa\.me\/\d+\?text=/)
   expect(text).toMatch(/Պատվեր M-\d{4}-\d{3}/)
   expect(text).toContain('+374 91 123456')
-  expect(text).toContain('• 2 × Հավով շաուրմա (Հաց: պիտա; Սոուս: սխտորով; Առանց: սոխի; Ավելացնել: չեդեր) — 3 600 ֏')
+  expect(text).toContain('• 3 × Հավի շաուրմա (Սոուս: սխտորով; Առանց: սոխի) — 3 600 ֏')
   expect(text).toContain('Աշտարակ, 25–40′')
-  expect(text).toContain('Ընդամենը: 4 700 ֏') // 3 600 + 600 tan + 500 delivery
+  expect(text).toContain('Ընդամենը: 4 600 ֏') // 3 600 + 500 tan + 500 delivery
   expect(text).toContain('Կանխիկ')
 
   // stub, then a fresh ticket
@@ -88,7 +87,7 @@ test('new customer orders by WhatsApp, gets a ticket stub, and can repeat the or
 
   await page.locator('.ticket-btn').click()
   await ticket.getByRole('button', { name: /Կրկնել նախորդ պատվերը/ }).click()
-  await expect(page.locator('.ticket-btn__count')).toContainText('3')
+  await expect(page.locator('.ticket-btn__count')).toContainText('4')
   // the details were remembered
   await expect(page.getByLabel(/Հեռախոս/)).toHaveValue('+374 91 123456')
 })
@@ -97,7 +96,7 @@ test('closed at night: the ticket says when we open and does not send', async ({
   await boot(page, { at: CLOSED })
   await page.goto('/en')
   await expect(page.locator('.hero .status')).toContainText('Closed')
-  await adds(page, 'sides').first().click()
+  await adds(page, 'kebab').first().click()
   await page.locator('.ticket-btn').click()
   const ticket = page.locator('dialog.ticket')
   await expect(ticket.getByRole('alert')).toContainText('today from 10:00')
@@ -109,7 +108,7 @@ test('closed at night: the ticket says when we open and does not send', async ({
 test('Telegram: a failed copy is reported and the text is offered to copy by hand', async ({ page }) => {
   await boot(page, { clipboard: false })
   await page.goto('/hy')
-  await adds(page, 'sides').first().click()
+  await adds(page, 'kebab').first().click()
   await page.locator('.ticket-btn').click()
   await page.getByText('Կվերցնեմ ինքս').click()
   await fillTicket(page, false)
@@ -123,8 +122,8 @@ test('Telegram: a failed copy is reported and the text is offered to copy by han
 test('clearing the ticket can be undone, removing a line keeps focus in the ticket', async ({ page }) => {
   await boot(page)
   await page.goto('/ru')
-  await adds(page, 'sides').nth(0).click()
-  await adds(page, 'sides').nth(1).click()
+  await adds(page, 'kebab').nth(0).click()
+  await adds(page, 'kebab').nth(1).click()
   await page.locator('.ticket-btn').click()
   const ticket = page.locator('dialog.ticket')
   await ticket.locator('.line .stepper button').first().click()
@@ -181,7 +180,7 @@ test('accessibility: no serious or critical axe violations on the page and in th
   await adds(page, 'shawarma').first().click()
   expect(await scan()).toEqual([])
   await page.keyboard.press('Escape')
-  await adds(page, 'sides').first().click()
+  await adds(page, 'kebab').first().click()
   await page.locator('.ticket-btn').click()
   await page.locator('.ticket__foot .btn--red').click()
   expect(await scan()).toEqual([])
@@ -194,7 +193,7 @@ test('QR card shows where it leads; language switch keeps the ticket', async ({ 
   await page.goto('/en/qr')
   await expect(page.locator('.qr__url')).toHaveText(/\S+/)
   await page.goto('/en')
-  await adds(page, 'sides').first().click()
+  await adds(page, 'kebab').first().click()
   await page.locator('.lang a[hreflang=ru]').click()
   await expect(page).toHaveURL(/\/ru/)
   await expect(page.locator('.ticket-btn__count')).toContainText('1')
@@ -204,39 +203,42 @@ test('menu: one list with every dish, filters and search', async ({ page }) => {
   await boot(page)
   await page.goto('/ru')
   const visible = () => page.locator('.dish:visible').count()
-  expect(await visible()).toBe(21)
+  expect(await visible()).toBe(16)
   await page.getByRole('button', { name: 'Без свинины' }).click()
-  await expect(page.locator('.tools__count')).toContainText('18')
-  await expect(page.locator('.dish:visible', { hasText: 'Матадор Дабл' })).toHaveCount(0)
+  await expect(page.locator('.tools__count')).toContainText('14')
+  await expect(page.locator('.dish:visible', { hasText: 'Шаурма со свининой' })).toHaveCount(0)
+  // no spicy dish on the menu, so no "spicy" chip that could only empty the list
+  await expect(page.getByRole('button', { name: 'Острое' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Вегетарианское' }).click()
-  await page.getByRole('button', { name: 'Острое' }).click()
+  await expect(page.locator('.tools__count')).toContainText('3')
+  await page.getByPlaceholder('Найти блюдо').fill('шаурм')
   await expect(page.getByText('С такими фильтрами блюд нет.')).toBeVisible()
   await page.getByRole('button', { name: 'Сбросить фильтры' }).click()
   await page.getByPlaceholder('Найти блюдо').fill('шаурм')
-  await expect(page.locator('.tools__count')).toContainText('4')
+  await expect(page.locator('.tools__count')).toContainText('3')
   // the dish sheet names pork and allergens
   await page.getByPlaceholder('Найти блюдо').fill('')
-  await page.locator('#cat-burgers .dish__name button', { hasText: 'Матадор Дабл' }).click()
+  await page.locator('#cat-shawarma .dish__name button', { hasText: 'Шаурма со свининой' }).click()
   await expect(page.locator('dialog.sheet')).toContainText('Свинина')
-  await expect(page.locator('dialog.sheet')).toContainText('Аллергены: глютен, молоко')
+  await expect(page.locator('dialog.sheet')).toContainText('Аллергены: глютен, яйцо')
 })
 
 test('without JavaScript every dish is readable', async ({ browser }) => {
   const ctx = await browser.newContext({ javaScriptEnabled: false })
   const page = await ctx.newPage()
   await page.goto('/hy')
-  expect(await page.locator('.dish:visible').count()).toBe(21)
+  expect(await page.locator('.dish:visible').count()).toBe(16)
   await ctx.close()
 })
 
 test('delivery: zone fee, minimum order and free-delivery progress', async ({ page }) => {
   await boot(page)
   await page.goto('/en')
-  await adds(page, 'sides').first().click() // fries 900
+  await adds(page, 'kebab').first().click() // chicken kebab 1 100
   await page.locator('.ticket-btn').click()
   const ticket = page.locator('dialog.ticket')
-  await expect(ticket.locator('.sums__note')).toContainText('Add 2 100 ֏ more')
-  await expect(ticket.locator('.progress')).toContainText('9 100 ֏ more and delivery is free')
+  await expect(ticket.locator('.sums__note')).toContainText('Add 1 900 ֏ more')
+  await expect(ticket.locator('.progress')).toContainText('8 900 ֏ more and delivery is free')
   await ticket.locator('.seg--zones label').nth(1).click()
   await expect(ticket.locator('.sums')).toContainText('900 ֏')
   // the drink offer adds without leaving the ticket
@@ -255,7 +257,7 @@ test('table QR: the order goes to the table, without address or delivery fee', a
   await page.goto('/hy/qr?table=5')
   await expect(page.locator('h1')).toHaveText(/Սեղան 5/)
   await page.goto('/hy?table=5&utm_source=qr#menu')
-  await adds(page, 'sides').first().click()
+  await adds(page, 'kebab').first().click()
   await page.locator('.ticket-btn').click()
   const ticket = page.locator('dialog.ticket')
   await expect(ticket.getByLabel('Սեղան 5')).toBeChecked()

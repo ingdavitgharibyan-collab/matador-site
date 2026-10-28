@@ -13,7 +13,7 @@ export async function GET() {
   const lines = [
     '# Matador',
     '',
-    '> Fast-food restaurant in Ashtarak, Armenia: shawarma, Angus beef burgers, khorovats (Armenian barbecue) and BBQ. Order online by WhatsApp or Telegram, by phone, for delivery, pickup or at the table.',
+    '> Fast-food restaurant in Ashtarak, Armenia: shawarma, kebab, BBQ and burgers with chicken, pork, lamb, turkey and Angus beef. Order online by WhatsApp or Telegram, by phone, for delivery, pickup or at the table.',
     '',
     `- Address: ${s.address}`,
     `- Phone: ${s.phone}`,

@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Matador — shawarma, Angus burgers, BBQ',
     short_name: 'Matador',
-    description: 'Menu and ordering: shawarma, Angus burgers, khorovats and BBQ in Ashtarak.',
+    description: 'Menu and ordering: shawarma, kebab, BBQ and burgers in Ashtarak.',
     start_url: '/hy?utm_source=pwa#menu',
     scope: '/',
     display: 'standalone',

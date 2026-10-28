@@ -70,17 +70,18 @@ export function Motion() {
         })
       })
 
-      const stage = document.querySelector<HTMLElement>('.menu__stage')
-      if (stage && stage.getBoundingClientRect().top > window.innerHeight) {
-        gsap.from('.menu [role="tabpanel"]:not([hidden]) .dish', {
-          y: 36,
+      // each menu category: its dishes rise in a row as it arrives (below the fold only)
+      gsap.utils.toArray<HTMLElement>('.menu .cat').forEach((cat) => {
+        if (cat.getBoundingClientRect().top < window.innerHeight) return
+        gsap.from(cat.querySelectorAll('.dish'), {
+          y: 32,
           opacity: 0,
-          duration: 0.7,
-          stagger: 0.06,
+          duration: 0.6,
+          stagger: 0.05,
           ease: 'power3.out',
-          scrollTrigger: { trigger: stage, start: 'top 85%', once: true },
+          scrollTrigger: { trigger: cat, start: 'top 88%', once: true },
         })
-      }
+      })
 
       // the medallion turns like a coin through the section
       gsap.fromTo(

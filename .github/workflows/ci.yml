@@ -30,7 +30,7 @@ jobs:
           if npm run build > /tmp/guard.log 2>&1; then echo "build guard did not fire"; exit 1; fi
           grep -q "NEXT_PUBLIC_SERVER_URL must be" /tmp/guard.log
       - run: npm run build:local
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

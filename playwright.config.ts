@@ -23,6 +23,8 @@ export default defineConfig({
   projects: [
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
     { name: 'desktop', use: { viewport: { width: 1440, height: 900 } } },
+    // iPhone Safari: in CI (WebKit is installed there) or with E2E_WEBKIT=1
+    ...(process.env.CI || process.env.E2E_WEBKIT ? [{ name: 'iphone', use: { ...devices['iPhone 13'] } }] : []),
   ],
   webServer: [
     { command: 'node tests/e2e/telegram-mock.mjs', url: 'http://localhost:3999/calls', reuseExistingServer: true },

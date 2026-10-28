@@ -47,7 +47,15 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // 2. admin login throttle
+  // 2. optional: the admin only from listed addresses (ADMIN_ALLOWED_IPS="1.2.3.4,5.6.7.8"), behind a proxy that
+  //    sets X-Forwarded-For. For real two-factor protection put /admin behind Cloudflare Access (free tier).
+  const allowed = (process.env.ADMIN_ALLOWED_IPS ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+  if (allowed.length && (pathname.startsWith('/admin') || pathname === '/api/users/login')) {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || ''
+    if (!allowed.includes(ip)) return new NextResponse('Not found', { status: 404 })
+  }
+
+  // 3. admin login throttle
   if (pathname === '/api/users/login' && request.method === 'POST') {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || 'local'
     if (loginLimited(ip)) {
@@ -62,7 +70,7 @@ export function proxy(request: NextRequest) {
   if (ownTop.has(first) || isFile) return NextResponse.next()
   if (locales.includes(first)) return NextResponse.next()
 
-  // 3. /HY → /hy; anything else without a language (/, /menu, printed links) → the visitor's language
+  // 4. /HY → /hy; anything else without a language (/, /menu, printed links) → the visitor's language
   const url = request.nextUrl.clone()
   if (locales.includes(first.toLowerCase())) {
     url.pathname = '/' + first.toLowerCase() + pathname.slice(first.length + 1)

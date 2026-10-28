@@ -645,7 +645,8 @@ html {
   display: grid;
   grid-template-columns: clamp(76px, 8vw, 112px) minmax(0, 1fr) auto;
   gap: clamp(14px, 2vw, 28px);
-  align-items: center;
+  /* name, price and button share one top line: the eye reads a row, not three boxes */
+  align-items: start;
   padding: clamp(14px, 1.6vw, 20px);
   background: var(--albero-2);
   transition: background-color 0.2s var(--ease-out);
@@ -1645,8 +1646,8 @@ html.has-dialog {
 }
 .faq__title {
   grid-column: 1 / span 5;
-  font-size: var(--t-h2);
-  max-width: 9ch;
+  font-size: calc(var(--t-h2) * 0.72);
+  overflow-wrap: anywhere;
 }
 .faq__list {
   grid-column: 6 / span 7;
@@ -1704,7 +1705,7 @@ html.has-dialog {
   font-stretch: 62.5%;
   font-variation-settings: 'wdth' 62.5;
   text-transform: uppercase;
-  font-size: 24.4vw;
+  font-size: 23.2vw;
   line-height: 0.78;
   letter-spacing: -0.02em;
   margin-left: -0.04em;

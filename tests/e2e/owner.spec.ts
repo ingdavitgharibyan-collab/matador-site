@@ -54,9 +54,9 @@ test('an order is recorded with server prices and reaches the kitchen bot', asyn
   // anonymous visitors cannot read orders
   expect((await request.get('/api/orders')).status()).toBe(403)
 
-  const sent = (await calls(request)).find((c) => c.method === 'sendMessage')
+  // other specs send orders to the same mock in parallel: pick this order's message
+  const sent = (await calls(request)).find((c) => c.method === 'sendMessage' && String(c.body.text).includes(ref))
   expect(sent?.body.chat_id).toBe('-100777')
-  expect(String(sent?.body.text)).toContain(ref)
   expect(String(sent?.body.text)).toContain('Komitas 12')
   expect(JSON.stringify(sent?.body.reply_markup)).toContain(`s:${o.id}:accepted`)
 })

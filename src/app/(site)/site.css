@@ -19,7 +19,7 @@
   --gap: clamp(120px, 14vw, 220px);
   --col: calc((100vw - 2 * var(--m)) / 12);
 
-  --t-hero: clamp(2.75rem, 7.4vw, 7rem);
+  --t-hero: clamp(2.75rem, 6.2vw, 5.75rem);
   --t-h2: clamp(2.5rem, 6.2vw, 6rem);
   --t-h3: clamp(1.75rem, 3.2vw, 2.75rem);
   --t-body: 1.0625rem;
@@ -105,6 +105,13 @@ button {
 }
 html {
   scrollbar-color: var(--barrera) var(--negro);
+}
+.hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
 }
 .sr-only {
   position: absolute;
@@ -318,18 +325,16 @@ html {
   overflow: clip;
 }
 .hero__text {
-  grid-column: 1 / span 5;
+  grid-column: 1 / span 6;
   grid-row: 1;
   position: relative;
   z-index: 2;
 }
 .hero__title {
-  font-size: var(--t-hero);
-  max-width: 11ch;
+  font-size: calc(var(--t-hero) * 0.76);
 }
 :lang(hy) .hero__title {
-  font-size: calc(var(--t-hero) * 0.82);
-  max-width: 12ch;
+  font-size: calc(var(--t-hero) * 0.74);
 }
 .hero__lead {
   margin-top: 36px;
@@ -343,10 +348,21 @@ html {
   margin-top: 36px;
 }
 .hero__status {
+  display: grid;
+  gap: 6px;
   margin-top: 28px;
 }
+.hero__where {
+  justify-self: start;
+  padding-left: 24px;
+  font-size: var(--t-small);
+  color: color-mix(in srgb, var(--cal) 82%, transparent);
+}
+.hero__where:hover {
+  color: var(--oro);
+}
 .hero__logo {
-  grid-column: 6 / span 7;
+  grid-column: 7 / span 6;
   grid-row: 1;
   justify-self: end;
   width: min(100%, 980px);
@@ -367,18 +383,40 @@ html {
     grid-column: 1;
     grid-row: 1;
     justify-self: center;
-    width: min(100%, 560px);
-    margin-bottom: 8px;
+    width: auto;
+    margin-bottom: 4px;
   }
+  /* a fixed box before the image arrives: the text below never jumps (CLS) */
+  .hero__logo img {
+    width: auto;
+    height: 30svh;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  /* phone: title, action and "open now · where" fit the first screen; the description follows */
   .hero__text {
     grid-column: 1;
     grid-row: 2;
+    display: flex;
+    flex-direction: column;
   }
-  .hero__lead {
-    margin-top: 24px;
+  .hero__title {
+    font-size: clamp(2rem, 10vw, 3.1rem);
+  }
+  :lang(hy) .hero__title {
+    font-size: clamp(2rem, 9.6vw, 2.9rem);
   }
   .hero__actions {
-    margin-top: 28px;
+    order: 2;
+    margin-top: 20px;
+  }
+  .hero__status {
+    order: 3;
+    margin-top: 16px;
+  }
+  .hero__lead {
+    order: 4;
+    margin-top: 24px;
   }
   .hero__actions .btn {
     flex: 1 1 auto;
@@ -435,8 +473,8 @@ html {
 }
 .cape--page {
   position: fixed;
-  inset: 0 -20vw;
-  z-index: 90;
+  inset: var(--header-h) -20vw 0;
+  z-index: 30;
 }
 
 /* ---------------------------------------------------------------- menu (the cartel) */
@@ -476,7 +514,7 @@ html {
   display: grid;
   gap: 2px;
 }
-.cats button {
+.cats a {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -492,23 +530,24 @@ html {
   text-transform: uppercase;
   font-size: clamp(1.5rem, 2.4vw, 2.25rem);
   line-height: 1;
+  text-decoration: none;
   transition:
     background-color 0.2s var(--ease-out),
     color 0.2s var(--ease-out),
     padding 0.25s var(--ease-out);
 }
-.cats button span {
+.cats a span {
   font-weight: 600;
   font-size: var(--t-small);
   font-stretch: 100%;
   font-variation-settings: 'wdth' 100;
   text-transform: none;
 }
-.cats button:hover {
+.cats a:hover {
   background: var(--albero-2);
   padding-left: 22px;
 }
-.cats button[aria-selected='true'] {
+.cats a[aria-current='true'] {
   background: var(--negro);
   color: var(--albero);
   padding-left: 22px;
@@ -516,8 +555,72 @@ html {
 .menu__stage {
   grid-column: 6 / span 7;
   position: relative;
-  overflow: clip;
-  min-height: 60vh;
+  display: grid;
+  gap: clamp(56px, 7vw, 96px);
+}
+.cat {
+  scroll-margin-top: calc(var(--header-h) + 24px);
+}
+.cat[hidden],
+.dish[hidden] {
+  display: none;
+}
+.tools {
+  display: grid;
+  gap: 12px;
+}
+.tools input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 2px solid var(--negro);
+  border-radius: 0;
+  background: var(--albero-2);
+  color: var(--negro);
+  font-weight: 600;
+}
+.tools input::placeholder {
+  color: color-mix(in srgb, var(--negro) 62%, transparent);
+}
+.tools input:focus {
+  outline: 3px solid var(--negro);
+  outline-offset: 2px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  background: var(--albero-2);
+  font-weight: 700;
+}
+.chips button svg {
+  width: 16px;
+  height: 16px;
+}
+.chips button[aria-pressed='true'] {
+  background: var(--negro);
+  color: var(--albero);
+}
+.tools__count {
+  min-height: 1.5em;
+  font-weight: 600;
+  color: var(--barrera);
+}
+.menu__empty {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  padding: 24px;
+  background: var(--albero-2);
+  font-weight: 600;
 }
 .panel__head {
   display: flex;
@@ -542,7 +645,8 @@ html {
   display: grid;
   grid-template-columns: clamp(76px, 8vw, 112px) minmax(0, 1fr) auto;
   gap: clamp(14px, 2vw, 28px);
-  align-items: center;
+  /* name, price and button share one top line: the eye reads a row, not three boxes */
+  align-items: start;
   padding: clamp(14px, 1.6vw, 20px);
   background: var(--albero-2);
   transition: background-color 0.2s var(--ease-out);
@@ -632,8 +736,10 @@ html {
 .add[data-done='true'] {
   background: var(--barrera);
 }
-.dish[data-off='true'] {
-  opacity: 0.55;
+/* an unavailable dish dims its picture only: the text keeps full contrast (WCAG 1.4.3) */
+.dish[data-off='true'] .dish__art {
+  opacity: 0.45;
+  filter: grayscale(1);
 }
 @media (max-width: 960px) {
   .menu__grid {
@@ -657,25 +763,105 @@ html {
     background: var(--albero);
     scrollbar-width: none;
   }
-  .cats button {
+  .cats a {
     width: auto;
     flex: none;
     font-size: 1.375rem;
     padding: 10px 14px;
   }
-  .cats button span {
+  .cats a span {
     display: none;
   }
-  .cats button:hover {
+  .cats a:hover {
     padding-left: 14px;
   }
-  .cats button[aria-selected='true'] {
+  .cats a[aria-current='true'] {
     padding-left: 14px;
+  }
+  .cat {
+    scroll-margin-top: calc(var(--header-h) + 76px);
   }
   .menu__crest {
     float: right;
     width: 88px;
     margin: 0 0 0 16px;
+  }
+}
+/* Armenian capitals lose the word shapes readers scan by: dish names and categories stay in sentence case */
+:lang(hy) .dish__name,
+:lang(hy) .cats a {
+  text-transform: none;
+  font-stretch: 75%;
+  font-variation-settings: 'wdth' 75;
+  font-weight: 800;
+}
+.opts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.opts legend {
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+.opts legend span {
+  font-weight: 600;
+  font-size: var(--t-small);
+  color: var(--barrera);
+}
+.opts label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--albero) 30%, var(--cal));
+  font-weight: 700;
+  cursor: pointer;
+}
+.opts input {
+  position: absolute;
+  opacity: 0;
+}
+.opts label:has(input:checked) {
+  background: var(--negro);
+  color: var(--cal);
+}
+.opts label:has(input:focus-visible) {
+  outline: 3px solid var(--oro);
+  outline-offset: 2px;
+}
+.opts__price {
+  font-weight: 800;
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  .sheet {
+    width: 100vw;
+    max-height: 92dvh;
+    margin: auto 0 0;
+  }
+  .sheet__art {
+    aspect-ratio: 3 / 1;
+  }
+  .sheet__row {
+    position: sticky;
+    bottom: 0;
+    flex-wrap: nowrap;
+    margin: 0 calc(-1 * clamp(20px, 4vw, 40px)) calc(-1 * clamp(20px, 4vw, 40px));
+    padding: 12px clamp(20px, 4vw, 40px);
+    background: var(--cal);
+  }
+  .sheet__add {
+    flex: 1;
+    min-width: 0;
+    white-space: normal;
+    line-height: 1.15;
   }
 }
 @media (max-width: 560px) {
@@ -802,6 +988,7 @@ dialog[open].sheet {
   position: fixed;
   inset: 0 0 0 auto;
   width: min(520px, 100vw);
+  max-width: 100vw;
   height: 100dvh;
   margin: 0 0 0 auto;
   background: transparent;
@@ -817,6 +1004,7 @@ dialog[open].ticket .ticket__paper {
 }
 .ticket__paper {
   height: 100%;
+  min-width: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--cal);
@@ -874,17 +1062,24 @@ dialog[open].ticket .ticket__paper {
 }
 .line {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name name' 'qty price';
   gap: 12px;
   align-items: center;
   padding: 10px 12px;
   background: color-mix(in srgb, var(--albero) 28%, var(--cal));
 }
 .line__name {
+  grid-area: name;
   font-weight: 700;
   line-height: 1.25;
 }
+.line .stepper {
+  grid-area: qty;
+  justify-self: start;
+}
 .line__price {
+  grid-area: price;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -1022,6 +1217,215 @@ dialog[open].ticket .ticket__paper {
   text-decoration: underline;
   font-weight: 600;
   color: var(--barrera);
+}
+
+.ticket__actions {
+  display: flex;
+  gap: 4px;
+}
+.ticket__actions .btn--red {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.15;
+}
+.btn--square {
+  width: 52px;
+  padding: 0;
+  flex: none;
+}
+.ticket__foot .btn--square {
+  width: 52px;
+}
+.ticket__fine {
+  font-size: var(--t-small);
+  color: color-mix(in srgb, var(--negro) 72%, transparent);
+}
+.field__err {
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--muleta-press);
+}
+.seg--wrap {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.notice,
+.gate {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 14px 16px;
+  background: var(--negro);
+  color: var(--cal);
+  font-weight: 600;
+}
+.gate {
+  background: var(--muleta);
+}
+.gate a {
+  font-weight: 800;
+}
+.notice .ticket__clear {
+  color: var(--oro);
+}
+.repeat {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: color-mix(in srgb, var(--albero) 45%, var(--cal));
+  text-align: left;
+}
+.repeat:hover {
+  background: var(--albero);
+}
+.stub {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+.stub__ref {
+  font-weight: 900;
+  font-stretch: 75%;
+  font-variation-settings: 'wdth' 75;
+  font-size: 1.5rem;
+}
+.stub__ref strong {
+  display: block;
+  font-size: 2.75rem;
+  line-height: 1;
+  color: var(--muleta);
+  letter-spacing: 0.02em;
+}
+.stub__lines {
+  display: grid;
+  gap: 4px;
+  font-weight: 700;
+}
+.stub__total {
+  font-weight: 900;
+  font-size: 1.375rem;
+}
+.stub__actions {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.tg {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+.tg__text {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid var(--negro);
+  border-radius: 0;
+  background: #fffaf2;
+  font: inherit;
+  font-size: var(--t-small);
+}
+/* short screens (landscape, on-screen keyboard): the form gets the room while a field is being typed in */
+@media (max-height: 560px) {
+  .ticket__head {
+    padding-block: 8px;
+    grid-template-columns: 40px minmax(0, 1fr) 48px;
+  }
+  .ticket__head img {
+    width: 40px;
+    height: 40px;
+  }
+  .ticket__title {
+    font-size: 1.5rem;
+  }
+  .ticket__paper:has(.form :focus) .ticket__foot {
+    display: none;
+  }
+}
+html.has-dialog {
+  overflow: hidden;
+}
+
+.sums .progress {
+  display: grid;
+  justify-content: stretch;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--barrera);
+}
+.progress__bar {
+  height: 8px;
+  background: color-mix(in srgb, var(--albero) 40%, var(--cal));
+  position: relative;
+  overflow: hidden;
+}
+.progress__bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--muleta);
+  transform-origin: left;
+  transform: scaleX(var(--p, 0));
+  transition: transform 0.4s var(--ease-out);
+}
+.upsell {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+.upsell .chips button {
+  background: color-mix(in srgb, var(--albero) 35%, var(--cal));
+}
+.upsell .chips button:hover {
+  background: var(--albero);
+}
+.seg--zones label {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+}
+.seg--zones small {
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.line__note {
+  grid-column: 1 / -1;
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--barrera);
+}
+.promo summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--barrera);
+}
+.promo__row {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+.promo__row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 2px solid color-mix(in srgb, var(--negro) 30%, transparent);
+  border-radius: 0;
+  background: #fffaf2;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.promo__on {
+  margin-top: 8px;
+  font-weight: 800;
 }
 
 /* flying token when a dish is added */
@@ -1234,6 +1638,63 @@ dialog[open].ticket .ticket__paper {
   }
 }
 
+/* ---------------------------------------------------------------- faq */
+.faq {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 32px;
+  padding: 0 var(--m) var(--gap);
+}
+.faq__title {
+  grid-column: 1 / span 5;
+  font-size: calc(var(--t-h2) * 0.72);
+  overflow-wrap: anywhere;
+}
+.faq__list {
+  grid-column: 6 / span 7;
+  display: grid;
+  gap: 4px;
+}
+.faq details {
+  background: var(--negro-2);
+}
+.faq summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  font-weight: 700;
+  font-size: 1.125rem;
+  cursor: pointer;
+  list-style: none;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: '+';
+  color: var(--oro);
+  font-weight: 900;
+  transition: transform 0.25s var(--ease-out);
+}
+.faq details[open] summary::after {
+  transform: rotate(45deg);
+}
+.faq details p {
+  padding: 0 20px 20px;
+  max-width: 62ch;
+}
+@media (max-width: 860px) {
+  .faq__title,
+  .faq__list {
+    grid-column: 1 / -1;
+  }
+  .faq__title {
+    max-width: none;
+  }
+}
+
 /* ---------------------------------------------------------------- footer */
 .footer {
   background: var(--albero);
@@ -1246,7 +1707,7 @@ dialog[open].ticket .ticket__paper {
   font-stretch: 62.5%;
   font-variation-settings: 'wdth' 62.5;
   text-transform: uppercase;
-  font-size: 24.4vw;
+  font-size: 23.2vw;
   line-height: 0.78;
   letter-spacing: -0.02em;
   margin-left: -0.04em;
@@ -1292,6 +1753,10 @@ dialog[open].ticket .ticket__paper {
 .qr__code {
   width: min(320px, 100%);
 }
+.qr__url {
+  font-weight: 800;
+  font-size: 1.25rem;
+}
 .qr__title {
   font-size: clamp(2rem, 6vw, 3.25rem);
 }
@@ -1308,6 +1773,112 @@ dialog[open].ticket .ticket__paper {
   .qr__actions {
     display: none;
   }
+}
+
+/* ---------------------------------------------------------------- order status page */
+.order {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: var(--m);
+  background: var(--albero);
+  color: var(--negro);
+}
+.order__card {
+  width: min(560px, 100%);
+  display: grid;
+  gap: 20px;
+  justify-items: start;
+  padding: clamp(28px, 5vw, 48px);
+  background: var(--cal);
+}
+.order__title {
+  font-size: clamp(2rem, 7vw, 3rem);
+}
+.order__status {
+  font-weight: 800;
+  font-size: 1.375rem;
+}
+.order__status[data-final='true'] {
+  color: var(--muleta-press);
+}
+.order__steps {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  counter-reset: none;
+}
+.order__steps li {
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--albero) 30%, var(--cal));
+  font-weight: 600;
+}
+.order__steps li[data-done='true'] {
+  background: var(--negro);
+  color: var(--cal);
+}
+.order__steps li[aria-current='step'] {
+  background: var(--muleta);
+}
+.order__lines {
+  display: grid;
+  gap: 4px;
+  font-weight: 700;
+}
+.order__total {
+  font-weight: 900;
+  font-size: 1.375rem;
+}
+
+/* ---------------------------------------------------------------- legal + printable menu */
+.legal {
+  padding: clamp(32px, 6vw, 80px) var(--m) var(--gap);
+  background: var(--cal);
+  color: var(--negro);
+  min-height: 100svh;
+}
+.legal__card {
+  max-width: 68ch;
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+  justify-items: start;
+}
+.legal__title {
+  font-size: clamp(2.25rem, 6vw, 4rem);
+}
+.legal__lead {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.legal h2 {
+  margin-top: 18px;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+.print-menu__list {
+  display: grid;
+  gap: 14px;
+}
+.print-menu__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 1.125rem;
+}
+@media print {
+  .print-menu .qr__actions,
+  .header,
+  .skip {
+    display: none;
+  }
+  .legal {
+    padding: 0;
+  }
+}
+.legal section {
+  display: grid;
+  gap: 8px;
 }
 
 /* ---------------------------------------------------------------- motion off */

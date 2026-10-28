@@ -1,0 +1,39 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PAYLOAD_SECRET: ci-only-secret-not-used-in-production
+      DATABASE_URI: file:./ci.db
+      NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+      ADMIN_EMAIL: ci@matador.test
+      ADMIN_PASSWORD: ci-password-0123456789
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx next typegen
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm run test:unit
+      - name: The production build refuses a local origin
+        run: |
+          if npm run build > /tmp/guard.log 2>&1; then echo "build guard did not fire"; exit 1; fi
+          grep -q "NEXT_PUBLIC_SERVER_URL must be" /tmp/guard.log
+      - run: npm run build:local
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/

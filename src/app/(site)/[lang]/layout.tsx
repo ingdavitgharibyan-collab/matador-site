@@ -11,6 +11,8 @@ import '../site.css'
 const latin = Noto_Sans({ subsets: ['latin', 'cyrillic'], axes: ['wdth'], variable: '--font-latin', display: 'swap' })
 const armenian = Noto_Sans_Armenian({ subsets: ['armenian'], axes: ['wdth'], variable: '--font-armenian', display: 'swap' })
 
+const OG_LOCALE = { hy: 'hy_AM', ru: 'ru_RU', en: 'en_US' } as const
+
 export const generateStaticParams = () => locales.map((lang) => ({ lang }))
 export const viewport: Viewport = { themeColor: '#120d0b' }
 
@@ -32,7 +34,8 @@ export async function generateMetadata({ params }: LayoutProps<'/[lang]'>): Prom
       description: t.meta.description,
       url: `/${lang}`,
       siteName: 'Matador',
-      locale: lang,
+      locale: OG_LOCALE[lang],
+      alternateLocale: locales.filter((l) => l !== lang).map((l) => OG_LOCALE[l]),
       images: [{ url: '/brand/og.jpg', width: 1200, height: 630, alt: 'Matador' }],
     },
   }

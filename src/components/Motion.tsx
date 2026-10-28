@@ -2,52 +2,52 @@
 
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { SplitText } from 'gsap/SplitText'
 import Lenis from 'lenis'
 import { useEffect } from 'react'
 
-gsap.registerPlugin(ScrollTrigger, SplitText)
+gsap.registerPlugin(ScrollTrigger)
 
 /**
- * The motion layer. Content is visible without it; everything here starts from the rendered state.
- * One authored moment (the cape crossing the hero on load), entrances per section, scroll-linked
- * pictures. Nothing runs under prefers-reduced-motion.
+ * The motion layer. Rule: nothing that is already on screen is ever hidden — the first screen is painted by the
+ * server and stays readable and tappable from the first frame. The one authored moment is the muleta crossing
+ * the hero *over* the content; the logo settles under it. Below the fold, sections rise in as they arrive.
+ * Under prefers-reduced-motion only the dialog scroll lock runs.
  */
 export function Motion() {
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const root = document.documentElement
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let lenis: Lenis | null = null
 
-    const lenis = new Lenis({ duration: 1.1, smoothWheel: true, anchors: { offset: -64 } })
-    lenis.on('scroll', ScrollTrigger.update)
-    const tick = (time: number) => lenis.raf(time * 1000)
-    gsap.ticker.add(tick)
-    gsap.ticker.lagSmoothing(0)
-
-    // dialogs stop the page from scrolling underneath
-    const syncLock = () => (document.querySelector('dialog[open]') ? lenis.stop() : lenis.start())
+    // dialogs stop the page from scrolling underneath, with or without smooth scroll
+    const syncLock = () => {
+      const open = Boolean(document.querySelector('dialog[open]'))
+      root.classList.toggle('has-dialog', open)
+      if (lenis) open ? lenis.stop() : lenis.start()
+    }
     const mo = new MutationObserver(syncLock)
     mo.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] })
+    if (reduce) return () => mo.disconnect()
 
-    let split: SplitText | null = null
+    // smooth scroll only where it helps: precise pointers (touch scrolling is already native-smooth)
+    const tick = (time: number) => lenis?.raf(time * 1000)
+    if (window.matchMedia('(pointer: fine)').matches) {
+      lenis = new Lenis({ duration: 1.1, smoothWheel: true, anchors: { offset: -64 } })
+      lenis.on('scroll', ScrollTrigger.update)
+      gsap.ticker.add(tick)
+      gsap.ticker.lagSmoothing(0)
+    }
+
     const ctx = gsap.context(() => {
-      // ---- the signature: the muleta crosses the hero, the title and the logo arrive behind it
       const cape = document.querySelector<HTMLElement>('.hero > .cape')
-      const title = document.querySelector<HTMLElement>('.hero__title')
-      const intro = gsap.timeline({ defaults: { ease: 'power3.out' } })
       if (cape) {
-        intro
+        gsap
+          .timeline()
           .set(cape, { visibility: 'visible', xPercent: -110 })
-          .to(cape, { xPercent: 115, duration: 1.25, ease: 'power2.inOut' }, 0)
+          .to(cape, { xPercent: 115, duration: 0.95, ease: 'power2.inOut' })
           .set(cape, { visibility: 'hidden' })
       }
-      intro.from('.hero__logo', { scale: 0.9, rotate: -4, opacity: 0, duration: 1.1 }, 0.35)
-      if (title) {
-        document.fonts.ready.then(() => {
-          split = SplitText.create(title, { type: 'lines', mask: 'lines' })
-          gsap.from(split.lines, { yPercent: 105, duration: 0.9, stagger: 0.09, ease: 'power4.out', delay: 0.45 })
-        })
-      }
-      intro.from('.hero__lead, .hero__actions > *, .hero__status', { y: 22, opacity: 0, duration: 0.7, stagger: 0.08 }, 0.7)
+      gsap.fromTo('.hero__logo', { scale: 0.95, rotate: -3 }, { scale: 1, rotate: 0, duration: 1.1, ease: 'power3.out', delay: 0.25 })
 
       // hero logo drifts as the page scrolls away from it
       gsap.to('.hero__logo', {
@@ -57,27 +57,30 @@ export function Motion() {
         scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true },
       })
 
-      // ---- entrances: heading, then text, then picture, once per section
+      // entrances below the fold only: heading, then text, then picture, once per section
       gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((group) => {
-        const parts = group.querySelectorAll(':scope > *')
-        gsap.from(parts, {
+        if (group.getBoundingClientRect().top < window.innerHeight) return
+        gsap.from(group.querySelectorAll(':scope > *'), {
           y: 28,
           opacity: 0,
           duration: 0.8,
           stagger: 0.075,
           ease: 'power3.out',
-          scrollTrigger: { trigger: group, start: 'top 82%', once: true },
+          scrollTrigger: { trigger: group, start: 'top 85%', once: true },
         })
       })
 
-      // dishes of the first act rise in a row
-      gsap.from('.menu [role="tabpanel"]:not([hidden]) .dish', {
-        y: 36,
-        opacity: 0,
-        duration: 0.7,
-        stagger: 0.06,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: '.menu__stage', start: 'top 80%', once: true },
+      // each menu category: its dishes rise in a row as it arrives (below the fold only)
+      gsap.utils.toArray<HTMLElement>('.menu .cat').forEach((cat) => {
+        if (cat.getBoundingClientRect().top < window.innerHeight) return
+        gsap.from(cat.querySelectorAll('.dish'), {
+          y: 32,
+          opacity: 0,
+          duration: 0.6,
+          stagger: 0.05,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: cat, start: 'top 88%', once: true },
+        })
       })
 
       // the medallion turns like a coin through the section
@@ -97,10 +100,10 @@ export function Motion() {
 
     return () => {
       ctx.revert()
-      split?.revert()
       mo.disconnect()
       gsap.ticker.remove(tick)
-      lenis.destroy()
+      lenis?.destroy()
+      root.classList.remove('has-dialog')
     }
   }, [])
   return null

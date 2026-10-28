@@ -2,17 +2,15 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 
 import { Cape } from '@/components/Cape'
-import { CategoryLink } from '@/components/CategoryLink'
+import { LazyMotion, LazyTicket, RegisterSW } from '@/components/Deferred'
 import { Header } from '@/components/Header'
 import { IconPhone } from '@/components/icons'
 import { MapEmbed } from '@/components/MapEmbed'
 import { Menu } from '@/components/Menu'
-import { Motion } from '@/components/Motion'
-import { OpenStatus } from '@/components/OpenStatus'
-import { Ticket } from '@/components/Ticket'
+import { HoursTable, OpenStatus } from '@/components/OpenStatus'
 import { getMenu, getSettings } from '@/lib/data'
-import { yerevanNow } from '@/lib/hours'
 import { getDict, hasLocale } from '@/lib/i18n'
+import { faq as buildFaq } from '@/lib/faq'
 import { jsonLd } from '@/lib/jsonld'
 
 export const revalidate = 60
@@ -28,7 +26,7 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
   if (!hasLocale(lang)) notFound()
   const t = getDict(lang)
   const [menu, s] = await Promise.all([getMenu(lang), getSettings(lang)])
-  const today = yerevanNow().day
+  const faq = buildFaq(lang, s, menu, t)
   const tel = `tel:${s.phone.replace(/[^\d+]/g, '')}`
   const q = `${s.lat},${s.lng}`
 
@@ -55,7 +53,10 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
               </a>
             </div>
             <div className="hero__status">
-              <OpenStatus hours={s.hours} t={t} />
+              <OpenStatus hours={s.hours} closures={s.closures} paused={s.paused} t={t} />
+              <a className="hero__where" href="#visit">
+                {s.address}
+              </a>
             </div>
           </div>
           <div className="hero__logo">
@@ -64,12 +65,19 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
               alt="Matador: shawarma, Angus burgers, BBQ & more"
               width={1400}
               height={1174}
-              priority
-              sizes="(max-width: 860px) 100vw, 60vw"
+              preload
+              sizes="(max-width: 860px) 75vw, 60vw"
             />
           </div>
         </section>
 
+        {/* taps on "Add" / the ticket before the scripts have loaded are queued, not lost (see Menu, Header) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.__mq=[];document.addEventListener('click',function(e){if(window.__mh)return;var b=e.target.closest&&e.target.closest('[data-add],[data-ticket-target]');if(!b)return;if(b.hasAttribute('data-add')){window.__mq.push(b.getAttribute('data-add'));b.setAttribute('data-done','true')}else{window.__mt=1}},true);",
+          }}
+        />
         <Menu menu={menu} t={t} />
 
         <section className="house" id="house" aria-labelledby="house-title">
@@ -90,10 +98,10 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
                 .filter((c) => FIRES[c.slug])
                 .map((c) => (
                   <li key={c.slug}>
-                    <CategoryLink slug={c.slug}>
+                    <a href={`#cat-${c.slug}`}>
                       <strong>{FIRES[c.slug][lang]}</strong>
                       <span>{c.name}</span>
-                    </CategoryLink>
+                    </a>
                   </li>
                 ))}
             </ul>
@@ -117,17 +125,9 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
             </div>
             <div>
               <h3>{t.visit.hours}</h3>
-              <OpenStatus hours={s.hours} t={t} />
-              <div className="hours" style={{ marginTop: 14 }}>
-                {s.hours.map((h, i) => (
-                  <div key={i} data-today={i === today}>
-                    <span>
-                      {t.days[i]}
-                      {i === today && <span className="sr-only"> ({t.visit.today})</span>}
-                    </span>
-                    <span>{h.closed ? t.visit.closed : `${h.open}–${h.close}`}</span>
-                  </div>
-                ))}
+              <OpenStatus hours={s.hours} closures={s.closures} paused={s.paused} t={t} />
+              <div style={{ marginTop: 14 }}>
+                <HoursTable hours={s.hours} closures={s.closures} t={t} />
               </div>
             </div>
             {(s.instagram || s.facebook || s.telegram) && (
@@ -166,6 +166,19 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
             </div>
           </div>
         </section>
+        <section className="faq" id="faq" aria-labelledby="faq-title">
+          <h2 className="display faq__title" id="faq-title">
+            {t.faq.title}
+          </h2>
+          <div className="faq__list" data-reveal>
+            {faq.map((f) => (
+              <details key={f.q}>
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
       </main>
 
       <footer className="footer">
@@ -179,7 +192,10 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
           <nav aria-label="Footer">
             <a href="#menu">{t.nav.menu}</a>
             <a href="#visit">{t.nav.visit}</a>
+            <a href={`/${lang}/menu`}>{t.footer.menu}</a>
             <a href={`/${lang}/qr`}>QR</a>
+            <a href={`/${lang}/privacy`}>{t.footer.privacy}</a>
+            <a href={`/${lang}/terms`}>{t.footer.terms}</a>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- the admin is a separate root layout */}
             <a href="/admin" rel="nofollow">
               {t.footer.admin}
@@ -188,9 +204,10 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
         </div>
       </footer>
 
-      <Ticket t={t} settings={s} />
-      <Motion />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(lang, menu, s, t) }} />
+      <LazyTicket t={t} lang={lang} settings={s} drinks={menu.find((c) => c.slug === 'drinks')?.dishes ?? []} />
+      <LazyMotion />
+      <RegisterSW />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(lang, menu, s, t, faq) }} />
     </>
   )
 }

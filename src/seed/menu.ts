@@ -8,22 +8,22 @@ export const categories: { slug: string; name: L; tagline: L }[] = [
   {
     slug: 'shawarma',
     name: { hy: 'Շաուրմա', ru: 'Шаурма', en: 'Shawarma' },
-    tagline: { hy: 'Լավաշով կամ պիտայով', ru: 'В лаваше или в пите', en: 'In lavash or pita' },
+    tagline: { hy: 'Լավաշի մեջ', ru: 'В лаваше', en: 'In lavash' },
   },
   {
-    slug: 'burgers',
-    name: { hy: 'Angus բուրգերներ', ru: 'Бургеры Angus', en: 'Angus burgers' },
-    tagline: { hy: 'Կոտլետ 100% Angus տավարից', ru: 'Котлета из 100% говядины Angus', en: 'Patties of 100% Angus beef' },
+    slug: 'kebab',
+    name: { hy: 'Քյաբաբ', ru: 'Кебаб', en: 'Kebab' },
+    tagline: { hy: 'Շամփուրի վրա, ածուխով', ru: 'На шампуре, на углях', en: 'On the skewer, over charcoal' },
   },
   {
     slug: 'bbq',
-    name: { hy: 'Խորոված և BBQ', ru: 'Хоровац и BBQ', en: 'Khorovats & BBQ' },
-    tagline: { hy: 'Ածուխի վրա', ru: 'На углях', en: 'Over charcoal' },
+    name: { hy: 'BBQ', ru: 'BBQ', en: 'BBQ' },
+    tagline: { hy: 'Փոքր կտորներով, ածուխի վրա', ru: 'Небольшими кусочками на углях', en: 'Bite-size pieces over charcoal' },
   },
   {
-    slug: 'sides',
-    name: { hy: 'Կարտոֆիլ և աղցաններ', ru: 'Гарниры и салаты', en: 'Sides & salads' },
-    tagline: { hy: 'Եվ բոլոր սոուսները', ru: 'И все соусы', en: 'And every sauce' },
+    slug: 'burgers',
+    name: { hy: 'Բուրգերներ', ru: 'Бургеры', en: 'Burgers' },
+    tagline: { hy: 'Հավով կամ Angus', ru: 'С курицей или Angus', en: 'Chicken or Angus' },
   },
   {
     slug: 'drinks',
@@ -44,314 +44,140 @@ type Dish = {
   signature?: boolean
 }
 
-export const dishes: Dish[] = [
-  {
-    category: 'shawarma',
-    name: { hy: 'Հավով շաուրմա', ru: 'Шаурма с курицей', en: 'Chicken shawarma' },
-    description: {
-      hy: 'Հավի ազդր շամփուրից, թարմ բանջարեղեն և սխտորով սոուս՝ բարակ լավաշի մեջ։',
-      ru: 'Куриное бедро с вертела, свежие овощи и чесночный соус в тонком лаваше.',
-      en: 'Chicken thigh off the spit, fresh vegetables and garlic sauce in thin lavash.',
-    },
-    ingredients: {
-      hy: 'հավի ազդր, լոլիկ, վարունգ, կաղամբ, թթու վարունգ, սխտորով սոուս, լավաշ',
-      ru: 'куриное бедро, помидор, огурец, капуста, маринованный огурец, чесночный соус, лаваш',
-      en: 'chicken thigh, tomato, cucumber, cabbage, pickles, garlic sauce, lavash',
-    },
-    price: 1500,
-    weight: '350 g',
+/*
+ * The working menu (owner's list, 29.10.2026): names, groups and prices. Descriptions, ingredients, weights and
+ * the drinks' names are still SAMPLE — portion weights stay empty until the cooked portion is confirmed.
+ */
+// hy: the meat's genitive ("հավի միս"); ru: nominative and genitive
+type M = { hy: string; ru: string; ruOf: string; en: string }
+const MEAT: Record<string, M> = {
+  chicken: { hy: 'հավի', ru: 'курица', ruOf: 'курицы', en: 'chicken' },
+  pork: { hy: 'խոզի', ru: 'свинина', ruOf: 'свинины', en: 'pork' },
+  angus: { hy: 'Angus տավարի', ru: 'говядина Angus', ruOf: 'говядины Angus', en: 'Angus beef' },
+  turkey: { hy: 'հնդկահավի', ru: 'индейка', ruOf: 'индейки', en: 'turkey' },
+  lamb: { hy: 'գառան', ru: 'баранина', ruOf: 'баранины', en: 'lamb' },
+}
+type Meat = 'chicken' | 'pork' | 'angus' | 'turkey' | 'lamb'
+const NAMES: Record<string, Record<Meat, L>> = {
+  shawarma: {
+    chicken: { hy: 'Հավի շաուրմա', ru: 'Шаурма с курицей', en: 'Chicken shawarma' },
+    pork: { hy: 'Խոզի շաուրմա', ru: 'Шаурма со свининой', en: 'Pork shawarma' },
+    angus: { hy: 'Angus շաուրմա', ru: 'Шаурма Angus', en: 'Angus shawarma' },
+    turkey: { hy: '', ru: '', en: '' },
+    lamb: { hy: '', ru: '', en: '' },
+  },
+  kebab: {
+    chicken: { hy: 'Հավի քյաբաբ', ru: 'Кебаб из курицы', en: 'Chicken kebab' },
+    turkey: { hy: 'Հնդկահավի քյաբաբ', ru: 'Кебаб из индейки', en: 'Turkey kebab' },
+    angus: { hy: 'Angus քյաբաբ', ru: 'Кебаб Angus', en: 'Angus kebab' },
+    lamb: { hy: 'Գառան քյաբաբ', ru: 'Кебаб из баранины', en: 'Lamb kebab' },
+    pork: { hy: '', ru: '', en: '' },
+  },
+  bbq: {
+    chicken: { hy: 'Հավի BBQ', ru: 'BBQ из курицы', en: 'Chicken BBQ' },
+    pork: { hy: 'Խոզի BBQ', ru: 'BBQ из свинины', en: 'Pork BBQ' },
+    angus: { hy: 'Angus BBQ', ru: 'BBQ Angus', en: 'Angus BBQ' },
+    lamb: { hy: 'Գառան BBQ', ru: 'BBQ из баранины', en: 'Lamb BBQ' },
+    turkey: { hy: '', ru: '', en: '' },
+  },
+  burgers: {
+    chicken: { hy: 'Հավի բուրգեր', ru: 'Бургер с курицей', en: 'Chicken burger' },
+    angus: { hy: 'Angus բուրգեր', ru: 'Бургер Angus', en: 'Angus burger' },
+    pork: { hy: '', ru: '', en: '' },
+    turkey: { hy: '', ru: '', en: '' },
+    lamb: { hy: '', ru: '', en: '' },
+  },
+}
+const TEXT: Record<string, { description: (m: M) => L; ingredients: (m: M) => L; art: Dish['art'] }> = {
+  shawarma: {
+    description: (m) => ({
+      hy: `Թարմ ${m.hy} միս շամփուրից, բանջարեղեն և սոուս՝ լավաշի մեջ։`,
+      ru: `Свежая ${m.ru} с вертела, овощи и соус в лаваше.`,
+      en: `Fresh ${m.en} off the spit, vegetables and sauce in lavash.`,
+    }),
+    ingredients: (m) => ({ hy: `${m.hy} միս, լոլիկ, վարունգ, կաղամբ, սոուս, լավաշ`, ru: `${m.ru}, помидор, огурец, капуста, соус, лаваш`, en: `${m.en}, tomato, cucumber, cabbage, sauce, lavash` }),
     art: 'shawarma',
   },
-  {
-    category: 'shawarma',
-    name: { hy: 'Տավարով շաուրմա', ru: 'Шаурма с говядиной', en: 'Beef shawarma' },
-    description: {
-      hy: 'Տավարի միս շամփուրից, կարմիր սոխ, մաղադանոս և թահինի։',
-      ru: 'Говядина с вертела, красный лук, петрушка и тахини.',
-      en: 'Beef off the spit, red onion, parsley and tahini.',
-    },
-    ingredients: {
-      hy: 'տավարի միս, կարմիր սոխ, մաղադանոս, լոլիկ, թահինի, լավաշ',
-      ru: 'говядина, красный лук, петрушка, помидор, тахини, лаваш',
-      en: 'beef, red onion, parsley, tomato, tahini, lavash',
-    },
-    price: 1900,
-    weight: '380 g',
-    art: 'shawarma',
+  kebab: {
+    description: (m) => ({
+      hy: `Աղացած ${m.hy} միս սոխով և համեմունքներով, շամփուրի վրա, լավաշով։`,
+      ru: `Рубленая ${m.ru} с луком и специями на шампуре, с лавашом.`,
+      en: `Minced ${m.en} with onion and spices on the skewer, with lavash.`,
+    }),
+    ingredients: (m) => ({ hy: `${m.hy} միս, սոխ, համեմունքներ, կանաչի, լավաշ`, ru: `${m.ru}, лук, специи, зелень, лаваш`, en: `${m.en}, onion, spices, herbs, lavash` }),
+    art: 'skewer',
   },
-  {
-    category: 'shawarma',
-    name: { hy: 'Մատադոր XL', ru: 'Матадор XL', en: 'Matador XL' },
-    description: {
-      hy: 'Կրկնակի միս՝ հավ և տավար, չեդեր, հալապենյո և մեր կծու կարմիր սոուսը։',
-      ru: 'Двойное мясо — курица и говядина, чеддер, халапеньо и наш острый красный соус.',
-      en: 'Double meat, chicken and beef, cheddar, jalapeño and our hot red sauce.',
-    },
-    ingredients: {
-      hy: 'հավ, տավար, չեդեր, հալապենյո, լոլիկ, կաղամբ, կարմիր սոուս, լավաշ',
-      ru: 'курица, говядина, чеддер, халапеньо, помидор, капуста, красный соус, лаваш',
-      en: 'chicken, beef, cheddar, jalapeño, tomato, cabbage, red sauce, lavash',
-    },
-    price: 2600,
-    weight: '550 g',
-    art: 'shawarma',
-    spicy: true,
-    signature: true,
-  },
-  {
-    category: 'shawarma',
-    name: { hy: 'Շաուրմա ափսեով', ru: 'Шаурма на тарелке', en: 'Shawarma plate' },
-    description: {
-      hy: 'Միսը՝ առանձին, ֆրի կարտոֆիլով, աղցանով, պիտայով և երեք սոուսով։',
-      ru: 'Мясо отдельно, с картофелем фри, салатом, питой и тремя соусами.',
-      en: 'The meat served open, with fries, salad, pita and three sauces.',
-    },
-    ingredients: {
-      hy: 'հավ կամ տավար, ֆրի, աղցան, պիտա, սխտորով սոուս, թահինի, կարմիր սոուս',
-      ru: 'курица или говядина, фри, салат, пита, чесночный соус, тахини, красный соус',
-      en: 'chicken or beef, fries, salad, pita, garlic sauce, tahini, red sauce',
-    },
-    price: 2900,
-    weight: '500 g',
+  bbq: {
+    description: (m) => ({
+      hy: `${cap(m.hy)} միս՝ փոքր կտորներով ածուխի վրա, սոխով, կանաչիով և սոուսով։`,
+      ru: `${cap(m.ru)} небольшими кусочками на углях, с луком, зеленью и соусом.`,
+      en: `${cap(m.en)} in bite-size pieces over charcoal, with onion, herbs and sauce.`,
+    }),
+    ingredients: (m) => ({ hy: `${m.hy} միս, սոխ, կանաչի, սոուս, լավաշ`, ru: `${m.ru}, лук, зелень, соус, лаваш`, en: `${m.en}, onion, herbs, sauce, lavash` }),
     art: 'plate',
   },
-  {
-    category: 'burgers',
-    name: { hy: 'Դասական Angus', ru: 'Классический Angus', en: 'Classic Angus' },
-    description: {
-      hy: '180 գ Angus կոտլետ, չեդեր, թթու վարունգ, սոխ և տան սոուսը բրիոշ բուլկիով։',
-      ru: '180 г котлеты Angus, чеддер, огурчики, лук и фирменный соус на булочке бриошь.',
-      en: '180 g Angus patty, cheddar, pickles, onion and house sauce on a brioche bun.',
-    },
-    ingredients: {
-      hy: 'Angus տավար, չեդեր, թթու վարունգ, սոխ, սալաթ, տան սոուս, բրիոշ',
-      ru: 'говядина Angus, чеддер, огурчики, лук, салат, фирменный соус, бриошь',
-      en: 'Angus beef, cheddar, pickles, onion, lettuce, house sauce, brioche',
-    },
-    price: 3200,
-    weight: '320 g',
+  burgers: {
+    description: (m) => ({
+      hy: `${cap(m.hy)} կոտլետ, թարմ բանջարեղեն և սոուս՝ բուլկու մեջ։`,
+      ru: `Котлета из ${m.ruOf}, свежие овощи и соус в булочке.`,
+      en: `${cap(m.en)} patty, fresh vegetables and sauce in a bun.`,
+    }),
+    ingredients: (m) => ({ hy: `${m.hy} միս, բուլկի, լոլիկ, սալաթ, սոուս`, ru: `${m.ru}, булочка, помидор, салат, соус`, en: `${m.en}, bun, tomato, lettuce, sauce` }),
     art: 'burger',
   },
-  {
-    category: 'burgers',
-    name: { hy: 'Կրկնակի չիզ', ru: 'Двойной чиз', en: 'Double cheese' },
-    description: {
-      hy: 'Երկու բարակ Angus կոտլետ, երկու շերտ չեդեր, մանանեխ և կետչուպ։',
-      ru: 'Две тонкие котлеты Angus, два слоя чеддера, горчица и кетчуп.',
-      en: 'Two thin Angus patties, two slices of cheddar, mustard and ketchup.',
-    },
-    ingredients: {
-      hy: 'Angus տավար, չեդեր, մանանեխ, կետչուպ, սոխ, բրիոշ',
-      ru: 'говядина Angus, чеддер, горчица, кетчуп, лук, бриошь',
-      en: 'Angus beef, cheddar, mustard, ketchup, onion, brioche',
-    },
-    price: 3600,
-    weight: '360 g',
-    art: 'burger',
-  },
-  {
-    category: 'burgers',
-    name: { hy: 'Տորո', ru: 'Торо', en: 'Toro' },
-    description: {
-      hy: 'Կծու բուրգեր՝ հալապենյո, պեպպեր ջեք պանիր և չիպոտլե մայոնեզ։',
-      ru: 'Острый бургер: халапеньо, сыр пеппер джек и майонез чипотле.',
-      en: 'The hot one: jalapeño, pepper jack and chipotle mayo.',
-    },
-    ingredients: {
-      hy: 'Angus տավար, պեպպեր ջեք, հալապենյո, չիպոտլե մայոնեզ, կարմիր սոխ, բրիոշ',
-      ru: 'говядина Angus, пеппер джек, халапеньо, майонез чипотле, красный лук, бриошь',
-      en: 'Angus beef, pepper jack, jalapeño, chipotle mayo, red onion, brioche',
-    },
-    price: 3700,
-    weight: '340 g',
-    art: 'burger',
-    spicy: true,
-  },
-  {
-    category: 'burgers',
-    name: { hy: 'Մատադոր Դաբլ', ru: 'Матадор Дабл', en: 'Matador Double' },
-    description: {
-      hy: 'Երկու Angus կոտլետ, բեկոն, կարամելացված սոխ, չեդեր և BBQ սոուս։',
-      ru: 'Две котлеты Angus, бекон, карамелизированный лук, чеддер и соус BBQ.',
-      en: 'Two Angus patties, bacon, caramelised onion, cheddar and BBQ sauce.',
-    },
-    ingredients: {
-      hy: 'Angus տավար ×2, բեկոն, չեդեր, կարամելացված սոխ, BBQ սոուս, բրիոշ',
-      ru: 'говядина Angus ×2, бекон, чеддер, карамелизированный лук, соус BBQ, бриошь',
-      en: 'Angus beef ×2, bacon, cheddar, caramelised onion, BBQ sauce, brioche',
-    },
-    price: 4900,
-    weight: '520 g',
-    art: 'burger',
-    signature: true,
-  },
-  {
-    category: 'bbq',
-    name: { hy: 'Խոզի խորոված', ru: 'Хоровац из свинины', en: 'Pork khorovats' },
-    description: {
-      hy: 'Խոզի վիզ ածուխի վրա, սոխով և սումախով, լավաշի վրա։',
-      ru: 'Свиная шея на углях, с луком и сумахом, на лаваше.',
-      en: 'Pork neck over charcoal with onion and sumac, served on lavash.',
-    },
-    ingredients: {
-      hy: 'խոզի վիզ, սոխ, սումախ, կանաչի, լավաշ',
-      ru: 'свиная шея, лук, сумах, зелень, лаваш',
-      en: 'pork neck, onion, sumac, herbs, lavash',
-    },
-    price: 4200,
-    weight: '300 g',
-    art: 'skewer',
-  },
-  {
-    category: 'bbq',
-    name: { hy: 'Գառան չալաղաջ', ru: 'Чалагач из баранины', en: 'Lamb chops' },
-    description: {
-      hy: 'Գառան կողիկներ ածուխի վրա, թարմ ուրցով։',
-      ru: 'Бараньи рёбрышки на углях со свежим чабрецом.',
-      en: 'Lamb ribs over charcoal with fresh thyme.',
-    },
-    ingredients: {
-      hy: 'գառան կողիկ, ուրց, սոխ, լավաշ',
-      ru: 'бараньи рёбрышки, чабрец, лук, лаваш',
-      en: 'lamb ribs, thyme, onion, lavash',
-    },
-    price: 5500,
-    weight: '350 g',
-    art: 'ribs',
-  },
-  {
-    category: 'bbq',
-    name: { hy: 'Հավի խորոված', ru: 'Хоровац из курицы', en: 'Chicken khorovats' },
-    description: {
-      hy: 'Հավի ազդր մածունով մարինադում, ածուխի վրա։',
-      ru: 'Куриное бедро в маринаде на мацуне, на углях.',
-      en: 'Chicken thigh marinated in matsun, over charcoal.',
-    },
-    ingredients: {
-      hy: 'հավի ազդր, մածուն, սխտոր, պղպեղ, լավաշ',
-      ru: 'куриное бедро, мацун, чеснок, перец, лаваш',
-      en: 'chicken thigh, matsun, garlic, pepper, lavash',
-    },
-    price: 3200,
-    weight: '300 g',
-    art: 'skewer',
-  },
-  {
-    category: 'bbq',
-    name: { hy: 'Լյուլա քաբաբ', ru: 'Люля-кебаб', en: 'Lula kebab' },
-    description: {
-      hy: 'Տավարի և գառան աղացած միս, սոխ և համեմունքներ, շամփուրի վրա։',
-      ru: 'Фарш из говядины и баранины с луком и специями, на шампуре.',
-      en: 'Minced beef and lamb with onion and spices, on the skewer.',
-    },
-    ingredients: {
-      hy: 'տավար, գառ, սոխ, համեմունքներ, լավաշ',
-      ru: 'говядина, баранина, лук, специи, лаваш',
-      en: 'beef, lamb, onion, spices, lavash',
-    },
-    price: 2600,
-    weight: '250 g',
-    art: 'skewer',
-  },
-  {
-    category: 'bbq',
-    name: { hy: 'BBQ կողիկներ', ru: 'Рёбра BBQ', en: 'BBQ ribs' },
-    description: {
-      hy: 'Խոզի կողիկներ՝ դանդաղ պատրաստված և BBQ գլեյզով ածուխի վրա։',
-      ru: 'Свиные рёбра, томлёные и покрытые глазурью BBQ на углях.',
-      en: 'Pork ribs, slow-cooked and glazed with BBQ sauce over charcoal.',
-    },
-    ingredients: {
-      hy: 'խոզի կողիկ, BBQ սոուս, մեղր, պապրիկա, ֆրի',
-      ru: 'свиные рёбра, соус BBQ, мёд, паприка, фри',
-      en: 'pork ribs, BBQ sauce, honey, paprika, fries',
-    },
-    price: 5900,
-    weight: '600 g',
-    art: 'ribs',
-    signature: true,
-  },
-  {
-    category: 'sides',
-    name: { hy: 'Ֆրի կարտոֆիլ', ru: 'Картофель фри', en: 'French fries' },
-    description: { hy: 'Աղով և պապրիկայով։', ru: 'С солью и паприкой.', en: 'With salt and paprika.' },
-    ingredients: { hy: 'կարտոֆիլ, աղ, պապրիկա', ru: 'картофель, соль, паприка', en: 'potato, salt, paprika' },
-    price: 900,
-    weight: '150 g',
-    art: 'fries',
-  },
-  {
-    category: 'sides',
-    name: { hy: 'Գյուղական կարտոֆիլ', ru: 'Картофель по-деревенски', en: 'Country potatoes' },
-    description: {
-      hy: 'Կեղևով կարտոֆիլ, սխտոր և սամիթ։',
-      ru: 'Картофель в кожуре, чеснок и укроп.',
-      en: 'Skin-on potato wedges, garlic and dill.',
-    },
-    ingredients: { hy: 'կարտոֆիլ, սխտոր, սամիթ', ru: 'картофель, чеснок, укроп', en: 'potato, garlic, dill' },
-    price: 1100,
-    weight: '200 g',
-    art: 'fries',
-  },
-  {
-    category: 'sides',
-    name: { hy: 'Ամառային աղցան', ru: 'Летний салат', en: 'Summer salad' },
-    description: {
-      hy: 'Լոլիկ, վարունգ, կարմիր սոխ և կանաչի՝ ձիթապտղի յուղով։',
-      ru: 'Помидор, огурец, красный лук и зелень с оливковым маслом.',
-      en: 'Tomato, cucumber, red onion and herbs with olive oil.',
-    },
-    ingredients: {
-      hy: 'լոլիկ, վարունգ, կարմիր սոխ, կանաչի, ձիթապտղի յուղ',
-      ru: 'помидор, огурец, красный лук, зелень, оливковое масло',
-      en: 'tomato, cucumber, red onion, herbs, olive oil',
-    },
-    price: 1400,
-    weight: '250 g',
-    art: 'salad',
-  },
-  {
-    category: 'sides',
-    name: { hy: 'Սոուս', ru: 'Соус', en: 'Sauce' },
-    description: {
-      hy: 'Սխտորով, BBQ, չիպոտլե կամ պանրով, ընտրեք պատվերի մեկնաբանության մեջ։',
-      ru: 'Чесночный, BBQ, чипотле или сырный — укажите в комментарии к заказу.',
-      en: 'Garlic, BBQ, chipotle or cheese — name it in the order note.',
-    },
-    ingredients: { hy: 'սխտոր, BBQ, չիպոտլե, պանիր', ru: 'чеснок, BBQ, чипотле, сыр', en: 'garlic, BBQ, chipotle, cheese' },
-    price: 300,
-    weight: '50 g',
-    art: 'sauce',
-  },
+}
+const cap = (x: string) => x[0].toUpperCase() + x.slice(1)
+const item = (category: string, meat: keyof typeof NAMES.shawarma, price: number, signature = false): Dish => ({
+  category,
+  name: NAMES[category][meat],
+  description: TEXT[category].description(MEAT[meat]),
+  ingredients: TEXT[category].ingredients(MEAT[meat]),
+  price,
+  weight: '',
+  art: TEXT[category].art,
+  ...(signature ? { signature } : {}),
+})
+
+export const dishes: Dish[] = [
+  item('shawarma', 'chicken', 1200, true),
+  item('shawarma', 'pork', 1400),
+  item('shawarma', 'angus', 2200),
+  item('kebab', 'chicken', 1100),
+  item('kebab', 'turkey', 1200),
+  item('kebab', 'angus', 2600),
+  item('kebab', 'lamb', 1900),
+  item('bbq', 'chicken', 1200),
+  item('bbq', 'pork', 1900),
+  item('bbq', 'angus', 2800),
+  item('bbq', 'lamb', 2000),
+  item('burgers', 'chicken', 1500),
+  item('burgers', 'angus', 2500, true),
+  // drinks: the working price is an average of 500 ֏; the drinks themselves are SAMPLE
   {
     category: 'drinks',
     name: { hy: 'Թան', ru: 'Тан', en: 'Tan' },
-    description: { hy: 'Սառը, թեթև աղի։', ru: 'Холодный, слегка солёный.', en: 'Cold and lightly salted yogurt drink.' },
+    description: { hy: 'Սառը, թեթև աղի։', ru: 'Холодный, слегка солёный.', en: 'Tan: a cold, lightly salted Armenian yogurt drink.' },
     ingredients: { hy: 'մածուն, ջուր, աղ', ru: 'мацун, вода, соль', en: 'matsun, water, salt' },
-    price: 600,
-    weight: '0.5 L',
-    art: 'drink',
-  },
-  {
-    category: 'drinks',
-    name: { hy: 'Տնական լիմոնադ', ru: 'Домашний лимонад', en: 'House lemonade' },
-    description: {
-      hy: 'Կիտրոն, թարխուն կամ նուռ։',
-      ru: 'Лимон, тархун или гранат.',
-      en: 'Lemon, tarragon or pomegranate.',
-    },
-    ingredients: { hy: 'կիտրոն, թարխուն, նուռ, շաքար', ru: 'лимон, тархун, гранат, сахар', en: 'lemon, tarragon, pomegranate, sugar' },
-    price: 1200,
+    price: 500,
     weight: '0.5 L',
     art: 'drink',
   },
   {
     category: 'drinks',
     name: { hy: 'Կոլա', ru: 'Кола', en: 'Cola' },
-    description: { hy: 'Ապակե շշով։', ru: 'В стеклянной бутылке.', en: 'In a glass bottle.' },
+    description: { hy: 'Սառը։', ru: 'Холодная.', en: 'Cold.' },
     ingredients: { hy: 'կոլա', ru: 'кола', en: 'cola' },
-    price: 700,
+    price: 500,
     weight: '0.33 L',
+    art: 'drink',
+  },
+  {
+    category: 'drinks',
+    name: { hy: 'Ջուր', ru: 'Вода', en: 'Water' },
+    description: { hy: 'Գազավորված կամ առանց գազի։', ru: 'С газом или без.', en: 'Sparkling or still.' },
+    ingredients: { hy: 'ջուր', ru: 'вода', en: 'water' },
+    price: 500,
+    weight: '0.5 L',
     art: 'drink',
   },
 ]
@@ -363,19 +189,77 @@ export const settings = {
   instagram: 'https://instagram.com/',
   facebook: 'https://facebook.com/',
   address: {
-    hy: 'Երևան, Աբովյան փ. 1 (նմուշ)',
-    ru: 'Ереван, ул. Абовяна 1 (образец)',
-    en: 'Yerevan, 1 Abovyan St (sample)',
+    hy: 'Աշտարակ (հասցեն՝ նմուշ)',
+    ru: 'Аштарак (адрес — образец)',
+    en: 'Ashtarak (sample address)',
   },
-  lat: 40.1792,
-  lng: 44.5133,
-  hours: Array.from({ length: 7 }, (_, i) => ({ open: '11:00', close: i >= 4 ? '03:00' : '02:00', closed: false })),
+  lat: 40.299,
+  lng: 44.362,
+  hours: Array.from({ length: 7 }, () => ({ open: '10:00', close: '00:00', closed: false })),
   deliveryFee: 500,
   freeDeliveryFrom: 10000,
   partners: [
-    { name: 'Yandex Eats', url: 'https://eda.yandex.am/' },
-    { name: 'Wolt', url: 'https://wolt.com/hy/arm/yerevan' },
-    { name: 'Glovo', url: 'https://glovoapp.com/am/en/yerevan/' },
-    { name: 'Menu.am', url: 'https://www.menu.am/' },
+    // SAMPLE store pages: replace with Matador's real listing on each service
+    { name: 'Yandex Eats', url: 'https://eda.yandex.am/r/matador' },
+    { name: 'Wolt', url: 'https://wolt.com/hy/arm/yerevan/restaurant/matador' },
+    { name: 'Glovo', url: 'https://glovoapp.com/am/en/yerevan/matador' },
+    { name: 'Menu.am', url: 'https://www.menu.am/en/yerevan/delivery/restaurant/matador' },
+  ],
+  paymentMethods: ['cash', 'card_courier'] as ('cash' | 'card_courier')[],
+  lastOrderMinutes: 30,
+}
+
+/* SAMPLE choices, diet flags and allergens per dish (keyed by the English name) — confirm with the kitchen. */
+type Opt = { name: L; price?: number }
+type Group = { name: L; multi?: boolean; required?: boolean; options: Opt[] }
+const sauce: Group = {
+  name: { hy: 'Սոուս', ru: 'Соус', en: 'Sauce' },
+  required: true,
+  options: [
+    { name: { hy: 'Սխտորով', ru: 'Чесночный', en: 'Garlic' } },
+    { name: { hy: 'Թահինի', ru: 'Тахини', en: 'Tahini' } },
+    { name: { hy: 'Կծու կարմիր', ru: 'Острый красный', en: 'Hot red' } },
   ],
 }
+const without = (items: L[]): Group => ({
+  name: { hy: 'Առանց', ru: 'Без', en: 'Without' },
+  multi: true,
+  options: items.map((name) => ({ name })),
+})
+const ONION = { hy: 'սոխի', ru: 'лука', en: 'onion' }
+const PICKLES = { hy: 'թթու վարունգի', ru: 'огурчиков', en: 'pickles' }
+const TOMATO = { hy: 'լոլիկի', ru: 'помидора', en: 'tomato' }
+
+export const dishExtras: Record<
+  string,
+  { containsPork?: boolean; vegetarian?: boolean; allergens?: string[]; optionGroups?: Group[] }
+> = {
+  'Chicken shawarma': { allergens: ['gluten', 'egg'], optionGroups: [sauce, without([ONION, PICKLES, TOMATO])] },
+  'Pork shawarma': { containsPork: true, allergens: ['gluten', 'egg'], optionGroups: [sauce, without([ONION, PICKLES, TOMATO])] },
+  'Angus shawarma': { allergens: ['gluten', 'egg'], optionGroups: [sauce, without([ONION, PICKLES, TOMATO])] },
+  'Chicken kebab': { allergens: ['gluten'], optionGroups: [without([ONION])] },
+  'Turkey kebab': { allergens: ['gluten'], optionGroups: [without([ONION])] },
+  'Angus kebab': { allergens: ['gluten'], optionGroups: [without([ONION])] },
+  'Lamb kebab': { allergens: ['gluten'], optionGroups: [without([ONION])] },
+  'Chicken BBQ': { allergens: ['gluten'], optionGroups: [without([ONION])] },
+  'Pork BBQ': { containsPork: true, allergens: ['gluten'], optionGroups: [without([ONION])] },
+  'Angus BBQ': { allergens: ['gluten'], optionGroups: [without([ONION])] },
+  'Lamb BBQ': { allergens: ['gluten'], optionGroups: [without([ONION])] },
+  'Chicken burger': { allergens: ['gluten', 'egg'], optionGroups: [without([ONION, PICKLES, TOMATO])] },
+  'Angus burger': { allergens: ['gluten', 'egg'], optionGroups: [without([ONION, PICKLES, TOMATO])] },
+  Tan: { vegetarian: true, allergens: ['milk'] },
+  Cola: { vegetarian: true },
+  Water: { vegetarian: true, optionGroups: [{ name: { hy: 'Տեսակ', ru: 'Вид', en: 'Kind' }, required: true, options: [{ name: { hy: 'Առանց գազի', ru: 'Без газа', en: 'Still' } }, { name: { hy: 'Գազավորված', ru: 'С газом', en: 'Sparkling' } }] }] },
+}
+
+export const deliveryZones = [
+  { name: { hy: 'Աշտարակ', ru: 'Аштарак', en: 'Ashtarak' }, fee: 500, minOrder: 3000, freeFrom: 10000, etaMin: 25, etaMax: 40 },
+  {
+    name: { hy: 'Մուղնի, Օշական, Փարպի', ru: 'Мугни, Ошакан, Парпи', en: 'Mughni, Oshakan, Parpi' },
+    fee: 900,
+    minOrder: 5000,
+    freeFrom: 15000,
+    etaMin: 45,
+    etaMax: 65,
+  },
+]

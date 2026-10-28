@@ -67,10 +67,13 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    categories: Category;
+    orders: Order;
     dishes: Dish;
+    categories: Category;
+    'promo-codes': PromoCode;
     media: Media;
     users: User;
+    metrics: Metric;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,10 +81,13 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     dishes: DishesSelect<false> | DishesSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    'promo-codes': PromoCodesSelect<false> | PromoCodesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    metrics: MetricsSelect<false> | MetricsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -127,14 +133,57 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
+ * via the `definition` "orders".
  */
-export interface Category {
+export interface Order {
   id: number;
-  name: string;
-  slug: string;
-  tagline?: string | null;
-  order?: number | null;
+  ref: string;
+  status: 'new' | 'accepted' | 'cooking' | 'ready' | 'out' | 'delivered' | 'cancelled' | 'rejected';
+  total: number;
+  mode: 'delivery' | 'pickup' | 'table';
+  table?: string | null;
+  zone?: string | null;
+  payment?: string | null;
+  name?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  flat?: string | null;
+  note?: string | null;
+  lines?:
+    | {
+        qty?: number | null;
+        label?: string | null;
+        unit?: number | null;
+        dish?: string | null;
+        opts?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  subtotal?: number | null;
+  fee?: number | null;
+  discount?: number | null;
+  promo?: string | null;
+  channel?: string | null;
+  lang?: string | null;
+  statusLog?:
+    | {
+        status?: string | null;
+        at?: string | null;
+        by?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  token?: string | null;
+  kitchenMessageId?: string | null;
+  ipHash?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -151,29 +200,69 @@ export interface Dish {
    * Comma-separated
    */
   ingredients?: string | null;
-  /**
-   * AMD
-   */
   price: number;
   /**
-   * e.g. 350 g, 0.5 L
+   * 350 g, 0.5 L
    */
   weight?: string | null;
-  order?: number | null;
-  spicy?: boolean | null;
   /**
-   * House favourite
+   * Smaller shows first
    */
-  signature?: boolean | null;
-  available?: boolean | null;
+  order?: number | null;
   /**
-   * Real photo of the dish; replaces the drawing
+   * Untick when sold out (stop-list)
+   */
+  available?: boolean | null;
+  spicy?: boolean | null;
+  signature?: boolean | null;
+  containsPork?: boolean | null;
+  vegetarian?: boolean | null;
+  allergens?: ('gluten' | 'milk' | 'egg' | 'sesame' | 'mustard' | 'nuts' | 'soy' | 'celery')[] | null;
+  /**
+   * Bread (one of), sauce (one of), "without…" or extras (several). The first option of a required group is preselected.
+   */
+  optionGroups?:
+    | {
+        name: string;
+        multi?: boolean | null;
+        required?: boolean | null;
+        options?:
+          | {
+              name: string;
+              price?: number | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * A real photo; replaces the drawing
    */
   photo?: (number | null) | Media;
   /**
-   * Drawing used when there is no photo
+   * Used when there is no photo
    */
   art?: ('shawarma' | 'plate' | 'burger' | 'skewer' | 'ribs' | 'fries' | 'salad' | 'drink' | 'sauce') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  name: string;
+  /**
+   * e.g. shawarma, drinks
+   */
+  slug: string;
+  tagline?: string | null;
+  /**
+   * Smaller shows first
+   */
+  order?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -216,10 +305,32 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promo-codes".
+ */
+export interface PromoCode {
+  id: number;
+  code: string;
+  active?: boolean | null;
+  kind: 'percent' | 'fixed' | 'free_delivery';
+  value?: number | null;
+  minOrder?: number | null;
+  validFrom?: string | null;
+  validTo?: string | null;
+  /**
+   * Empty = unlimited
+   */
+  maxUses?: number | null;
+  uses?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
   id: number;
+  role: 'owner' | 'manager' | 'kitchen';
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -239,6 +350,25 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "metrics".
+ */
+export interface Metric {
+  id: number;
+  day: string;
+  counts:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -265,12 +395,20 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'categories';
-        value: number | Category;
+        relationTo: 'orders';
+        value: number | Order;
       } | null)
     | ({
         relationTo: 'dishes';
         value: number | Dish;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'promo-codes';
+        value: number | PromoCode;
       } | null)
     | ({
         relationTo: 'media';
@@ -279,6 +417,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'metrics';
+        value: number | Metric;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -324,13 +466,48 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories_select".
+ * via the `definition` "orders_select".
  */
-export interface CategoriesSelect<T extends boolean = true> {
+export interface OrdersSelect<T extends boolean = true> {
+  ref?: T;
+  status?: T;
+  total?: T;
+  mode?: T;
+  table?: T;
+  zone?: T;
+  payment?: T;
   name?: T;
-  slug?: T;
-  tagline?: T;
-  order?: T;
+  phone?: T;
+  address?: T;
+  flat?: T;
+  note?: T;
+  lines?:
+    | T
+    | {
+        qty?: T;
+        label?: T;
+        unit?: T;
+        dish?: T;
+        opts?: T;
+        id?: T;
+      };
+  subtotal?: T;
+  fee?: T;
+  discount?: T;
+  promo?: T;
+  channel?: T;
+  lang?: T;
+  statusLog?:
+    | T
+    | {
+        status?: T;
+        at?: T;
+        by?: T;
+        id?: T;
+      };
+  token?: T;
+  kitchenMessageId?: T;
+  ipHash?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -346,11 +523,58 @@ export interface DishesSelect<T extends boolean = true> {
   price?: T;
   weight?: T;
   order?: T;
+  available?: T;
   spicy?: T;
   signature?: T;
-  available?: T;
+  containsPork?: T;
+  vegetarian?: T;
+  allergens?: T;
+  optionGroups?:
+    | T
+    | {
+        name?: T;
+        multi?: T;
+        required?: T;
+        options?:
+          | T
+          | {
+              name?: T;
+              price?: T;
+              id?: T;
+            };
+        id?: T;
+      };
   photo?: T;
   art?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  tagline?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promo-codes_select".
+ */
+export interface PromoCodesSelect<T extends boolean = true> {
+  code?: T;
+  active?: T;
+  kind?: T;
+  value?: T;
+  minOrder?: T;
+  validFrom?: T;
+  validTo?: T;
+  maxUses?: T;
+  uses?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -401,6 +625,7 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -418,6 +643,16 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "metrics_select".
+ */
+export interface MetricsSelect<T extends boolean = true> {
+  day?: T;
+  counts?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -466,7 +701,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 export interface Setting {
   id: number;
   /**
-   * International format, +374…
+   * +374 …
    */
   phone: string;
   /**
@@ -480,10 +715,13 @@ export interface Setting {
   instagram?: string | null;
   facebook?: string | null;
   address: string;
+  /**
+   * Right-click the spot in Google Maps, first number
+   */
   lat: number;
   lng: number;
   /**
-   * Monday first. Closing after midnight is fine (e.g. 11:00 → 02:00).
+   * Closing after midnight is fine (11:00 → 02:00). Same open and close time = open 24 h.
    */
   hours?:
     | {
@@ -494,15 +732,50 @@ export interface Setting {
       }[]
     | null;
   /**
-   * AMD, 0 = free
+   * On these days the site shows "closed" and takes no orders.
+   */
+  closures?:
+    | {
+        from: string;
+        to: string;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Kitchen overloaded or an outage. Calls stay possible.
+   */
+  ordersPaused?: boolean | null;
+  lastOrderMinutes?: number | null;
+  pauseNote?: string | null;
+  paymentMethods?: ('cash' | 'card_courier' | 'idram' | 'telcell' | 'transfer')[] | null;
+  /**
+   * The guest picks a zone and sees its fee, minimum order and time.
+   */
+  deliveryZones?:
+    | {
+        name: string;
+        fee?: number | null;
+        minOrder?: number | null;
+        freeFrom?: number | null;
+        /**
+         * min
+         */
+        etaMin?: number | null;
+        /**
+         * min
+         */
+        etaMax?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * ֏
    */
   deliveryFee?: number | null;
-  /**
-   * AMD
-   */
   freeDeliveryFrom?: number | null;
   /**
-   * Delivery services (Yandex Eats, Wolt, Glovo, Menu.am…)
+   * Paste Matador's own page on the service, not its home page
    */
   partners?:
     | {
@@ -511,6 +784,17 @@ export interface Setting {
         id?: string | null;
       }[]
     | null;
+  legalName?: string | null;
+  taxId?: string | null;
+  privacyEmail?: string | null;
+  /**
+   * After this the name, phone and address are erased automatically; only the numbers stay.
+   */
+  retentionDays?: number | null;
+  googleReviewUrl?: string | null;
+  googleMapsUrl?: string | null;
+  yandexMapsUrl?: string | null;
+  twoGisUrl?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -535,6 +819,29 @@ export interface SettingsSelect<T extends boolean = true> {
         closed?: T;
         id?: T;
       };
+  closures?:
+    | T
+    | {
+        from?: T;
+        to?: T;
+        note?: T;
+        id?: T;
+      };
+  ordersPaused?: T;
+  lastOrderMinutes?: T;
+  pauseNote?: T;
+  paymentMethods?: T;
+  deliveryZones?:
+    | T
+    | {
+        name?: T;
+        fee?: T;
+        minOrder?: T;
+        freeFrom?: T;
+        etaMin?: T;
+        etaMax?: T;
+        id?: T;
+      };
   deliveryFee?: T;
   freeDeliveryFrom?: T;
   partners?:
@@ -544,6 +851,14 @@ export interface SettingsSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  legalName?: T;
+  taxId?: T;
+  privacyEmail?: T;
+  retentionDays?: T;
+  googleReviewUrl?: T;
+  googleMapsUrl?: T;
+  yandexMapsUrl?: T;
+  twoGisUrl?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

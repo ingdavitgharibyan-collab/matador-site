@@ -8,3 +8,7 @@ next-env.d.ts
 *.tsbuildinfo
 .taste-skill
 .impeccable
+/backups
+/test-results
+/playwright-report
+ci.db

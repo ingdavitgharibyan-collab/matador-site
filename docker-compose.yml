@@ -1,0 +1,18 @@
+# docker compose up -d --build   (put Caddy or nginx with HTTPS in front; see README)
+services:
+  site:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL}
+    env_file: .env
+    environment:
+      DATABASE_URI: file:/data/matador.db
+      MEDIA_DIR: /data/media
+    volumes:
+      - matador-data:/data
+    ports:
+      - '127.0.0.1:3000:3000'
+    restart: unless-stopped
+volumes:
+  matador-data:

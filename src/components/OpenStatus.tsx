@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react'
 
-import type { Hours } from '@/lib/data'
-import { statusAt } from '@/lib/hours'
+import { type Closure, type Hours, statusAt } from '@/lib/hours'
 import { type Dict, fill } from '@/lib/i18n'
 
-/** Live: re-reads the clock every minute, in Yerevan time. */
-export function OpenStatus({ hours, t }: { hours: Hours; t: Dict }) {
+/** Re-reads the clock every minute, in Yerevan time. Renders nothing on the server (the time is unknown there). */
+function useNow() {
   const [now, setNow] = useState<Date | null>(null)
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the clock only exists on the client
@@ -15,17 +14,50 @@ export function OpenStatus({ hours, t }: { hours: Hours; t: Dict }) {
     const i = window.setInterval(() => setNow(new Date()), 60_000)
     return () => window.clearInterval(i)
   }, [])
-  const s = now ? statusAt(hours, now) : null
-  if (!s) return <p className="status" aria-hidden="true">&nbsp;</p>
-  const text = s.open
-    ? fill(t.status.openUntil, { t: s.until })
-    : s.today
-      ? fill(t.status.opensAt, { t: s.at })
-      : fill(t.status.opensDay, { d: t.days[s.nextDay].toLowerCase(), t: s.at })
+  return now
+}
+
+type Props = { hours: Hours; closures: Closure[]; paused?: boolean; t: Dict }
+
+export function statusText(s: ReturnType<typeof statusAt>, t: Dict) {
+  if (!s) return ''
+  if (s.open) return fill(t.status.openUntil, { t: s.until })
+  if (!s.at) return fill(t.status.closedNote, { n: s.closureNote ? `. ${s.closureNote}` : '' })
+  const base = s.today ? fill(t.status.opensAt, { t: s.at }) : fill(t.status.opensDay, { d: t.days[s.nextDay].toLowerCase(), t: s.at })
+  return s.closureNote ? `${s.closureNote}. ${base}` : base
+}
+
+export function OpenStatus({ hours, closures, paused, t, children }: Props & { children?: React.ReactNode }) {
+  const now = useNow()
+  const s = now ? statusAt(hours, now, closures) : null
+  if (!s) return <p className="status">&nbsp;{children}</p>
   return (
-    <p className="status" data-open={s.open} role="status">
+    <p className="status" data-open={s.open && !paused}>
       <span className="status__ember" aria-hidden="true" />
-      {text}
+      <span>
+        {paused && s.open ? t.status.paused : statusText(s, t)}
+        {children}
+      </span>
     </p>
+  )
+}
+
+/** Weekly hours; "today" is the day of the shift in progress (01:30 on Saturday still belongs to Friday). */
+export function HoursTable({ hours, closures, t }: Omit<Props, 'paused'>) {
+  const now = useNow()
+  const s = now ? statusAt(hours, now, closures) : null
+  const today = s && s.open ? s.shiftDay : now ? (new Date(now.getTime() + 4 * 3600_000).getUTCDay() + 6) % 7 : -1
+  return (
+    <div className="hours">
+      {hours.map((h, i) => (
+        <div key={i} data-today={i === today}>
+          <span>
+            {t.days[i]}
+            {i === today && <span className="sr-only"> ({t.visit.today})</span>}
+          </span>
+          <span>{h.closed ? t.visit.closed : h.open === h.close ? '24/7' : `${h.open}–${h.close}`}</span>
+        </div>
+      ))}
+    </div>
   )
 }

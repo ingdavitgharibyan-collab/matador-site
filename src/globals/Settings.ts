@@ -218,6 +218,47 @@ const fields: Field[] = [
           },
         ],
       },
+      {
+        label: L('Իրավական և քարտեզներ', 'Юридическое и карты', 'Legal & listings'),
+        fields: [
+          {
+            type: 'row',
+            fields: [
+              { name: 'legalName', label: L('Իրավաբանական անվանում', 'Юридическое название', 'Legal name'), type: 'text' },
+              { name: 'taxId', label: L('ՀՎՀՀ', 'ИНН (ՀՎՀՀ)', 'Tax ID (ՀՎՀՀ)'), type: 'text' },
+              {
+                name: 'privacyEmail',
+                label: L('Էլ. փոստ՝ տվյալների հարցերի համար', 'E-mail для вопросов о данных', 'E-mail for data requests'),
+                type: 'email',
+              },
+            ],
+          },
+          {
+            name: 'retentionDays',
+            label: L('Պատվերներում անձնական տվյալները պահել (օր)', 'Хранить личные данные в заказах (дней)', 'Keep personal data in orders (days)'),
+            type: 'number',
+            defaultValue: 180,
+            min: 30,
+            max: 1095,
+            admin: {
+              description: L(
+                'Դրանից հետո անունը, հեռախոսը և հասցեն ավտոմատ ջնջվում են, մնում են միայն թվերը։',
+                'После этого имя, телефон и адрес удаляются автоматически, остаются только цифры.',
+                'After this the name, phone and address are erased automatically; only the numbers stay.',
+              ),
+            },
+          },
+          { name: 'googleReviewUrl', label: L('Google review-ի հղում', 'Ссылка на отзыв в Google', 'Google review link'), type: 'text' },
+          {
+            type: 'row',
+            fields: [
+              { name: 'googleMapsUrl', label: 'Google Maps', type: 'text' },
+              { name: 'yandexMapsUrl', label: 'Yandex Maps', type: 'text' },
+              { name: 'twoGisUrl', label: '2GIS', type: 'text' },
+            ],
+          },
+        ],
+      },
     ],
   },
 ]

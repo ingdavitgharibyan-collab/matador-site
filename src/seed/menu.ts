@@ -116,6 +116,20 @@ export const dishes: Dish[] = [
     art: 'plate',
   },
   {
+    category: 'shawarma',
+    name: { hy: 'Մատադոր սեթ', ru: 'Сет Матадор', en: 'Matador set' },
+    description: {
+      hy: 'Շաուրմա, կարտոֆիլ և ըմպելիք՝ մեկ գնով։',
+      ru: 'Шаурма, картофель и напиток по одной цене.',
+      en: 'Shawarma, potatoes and a drink for one price.',
+    },
+    ingredients: { hy: 'շաուրմա, ֆրի կամ գյուղական կարտոֆիլ, թան կամ կոլա', ru: 'шаурма, фри или по-деревенски, тан или кола', en: 'shawarma, fries or country potatoes, tan or cola' },
+    price: 2900,
+    weight: '650 g',
+    art: 'plate',
+    signature: true,
+  },
+  {
     category: 'burgers',
     name: { hy: 'Դասական Angus', ru: 'Классический Angus', en: 'Classic Angus' },
     description: {
@@ -448,6 +462,14 @@ export const dishExtras: Record<
   'Chicken shawarma': { allergens: ['gluten', 'egg'], optionGroups: [bread, sauce, without([ONION, PICKLES, TOMATO]), shawarmaExtras] },
   'Beef shawarma': { allergens: ['gluten', 'sesame'], optionGroups: [bread, sauce, without([ONION, TOMATO]), shawarmaExtras] },
   'Matador XL': { allergens: ['gluten', 'milk', 'egg'], optionGroups: [bread, without([ONION, TOMATO])] },
+  'Matador set': {
+    allergens: ['gluten', 'egg', 'milk'],
+    optionGroups: [
+      { name: { hy: 'Շաուրմա', ru: 'Шаурма', en: 'Shawarma' }, required: true, options: [{ name: { hy: 'Հավով', ru: 'С курицей', en: 'Chicken' } }, { name: { hy: 'Տավարով', ru: 'С говядиной', en: 'Beef' }, price: 400 }] },
+      { name: { hy: 'Կարտոֆիլ', ru: 'Картофель', en: 'Potatoes' }, required: true, options: [{ name: { hy: 'Ֆրի', ru: 'Фри', en: 'Fries' } }, { name: { hy: 'Գյուղական', ru: 'По-деревенски', en: 'Country' }, price: 200 }] },
+      { name: { hy: 'Ըմպելիք', ru: 'Напиток', en: 'Drink' }, required: true, options: [{ name: { hy: 'Թան', ru: 'Тан', en: 'Tan' } }, { name: { hy: 'Կոլա', ru: 'Кола', en: 'Cola' }, price: 100 }] },
+    ],
+  },
   'Shawarma plate': { allergens: ['gluten', 'sesame', 'egg'], optionGroups: [meat, without([ONION])] },
   'Classic Angus': { allergens: ['gluten', 'milk', 'egg', 'mustard'], optionGroups: [without([ONION, PICKLES]), burgerExtras] },
   'Double cheese': { allergens: ['gluten', 'milk', 'mustard'], optionGroups: [without([ONION, PICKLES]), burgerExtras] },

@@ -11,10 +11,13 @@ import { fileURLToPath } from 'url'
 import { Categories } from './collections/Categories'
 import { Dishes } from './collections/Dishes'
 import { Media } from './collections/Media'
+import { Metrics } from './collections/Metrics'
 import { Orders } from './collections/Orders'
+import { PromoCodes } from './collections/PromoCodes'
 import { Users } from './collections/Users'
 import { migrations } from './migrations'
 import { Settings } from './globals/Settings'
+import { scheduleRetention } from './lib/retention'
 import { ensureAdmin, seedIfEmpty } from './seed'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -64,7 +67,7 @@ export default buildConfig({
     defaultLocale: 'hy',
     fallback: true,
   },
-  collections: [Orders, Dishes, Categories, Media, Users],
+  collections: [Orders, Dishes, Categories, PromoCodes, Media, Users, Metrics],
   globals: [Settings],
   graphQL: { disable: true },
   secret: process.env.PAYLOAD_SECRET || '',
@@ -78,5 +81,6 @@ export default buildConfig({
   onInit: async (payload) => {
     await ensureAdmin(payload)
     await seedIfEmpty(payload)
+    if (process.env.NEXT_PHASE !== 'phase-production-build') scheduleRetention(payload)
   },
 })

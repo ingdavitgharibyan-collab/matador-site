@@ -33,6 +33,8 @@ export type OrderDraft = {
   table?: string
   zone?: string
   fee: number
+  discount?: number
+  promo?: string
   payment: string
   name: string
   phone: string
@@ -41,9 +43,9 @@ export type OrderDraft = {
   note: string
 }
 
-export const orderTotals = (o: Pick<OrderDraft, 'lines' | 'fee'>) => {
+export const orderTotals = (o: Pick<OrderDraft, 'lines' | 'fee' | 'discount'>) => {
   const subtotal = o.lines.reduce((s, l) => s + l.qty * l.price, 0)
-  return { subtotal, total: subtotal + o.fee }
+  return { subtotal, total: subtotal - (o.discount ?? 0) + o.fee }
 }
 
 /** The message the guest sends: one block per topic, no stray blank lines, the note on one line. */
@@ -55,6 +57,7 @@ export function orderMessage(o: OrderDraft, t: Dict) {
     o.lines.map((l) => `• ${l.qty} × ${l.name} — ${formatPrice(l.qty * l.price)}`),
     [
       `${tk.subtotal}: ${formatPrice(subtotal)}`,
+      ...(o.discount ? [`${tk.discount}${o.promo ? ` (${o.promo})` : ''}: −${formatPrice(o.discount)}`] : []),
       o.mode === 'delivery'
         ? `${tk.delivery}${o.zone ? ` (${o.zone})` : ''}: ${o.fee ? formatPrice(o.fee) : tk.free}`
         : o.mode === 'pickup'

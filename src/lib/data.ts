@@ -53,6 +53,14 @@ export type SiteSettings = {
   deliveryFee: number
   freeDeliveryFrom: number | null
   zones: DeliveryZone[]
+  legalName: string
+  taxId: string
+  privacyEmail: string
+  retentionDays: number
+  googleReviewUrl: string
+  googleMapsUrl: string
+  yandexMapsUrl: string
+  twoGisUrl: string
   partners: { name: string; url: string }[]
 }
 
@@ -146,6 +154,14 @@ export const getSettings = cache(async (locale: Locale): Promise<SiteSettings> =
       etaMin: z.etaMin ?? 30,
       etaMax: z.etaMax ?? 45,
     })),
+    legalName: s.legalName ?? '',
+    taxId: s.taxId ?? '',
+    privacyEmail: s.privacyEmail ?? '',
+    retentionDays: s.retentionDays ?? 180,
+    googleReviewUrl: s.googleReviewUrl ?? '',
+    googleMapsUrl: s.googleMapsUrl ?? '',
+    yandexMapsUrl: s.yandexMapsUrl ?? '',
+    twoGisUrl: s.twoGisUrl ?? '',
     deliveryFee: s.deliveryFee ?? 0,
     freeDeliveryFrom: s.freeDeliveryFrom ?? null,
     partners: (s.partners ?? []).map((x) => ({ name: x.name, url: x.url })),

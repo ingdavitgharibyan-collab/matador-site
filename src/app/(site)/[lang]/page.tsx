@@ -2,7 +2,7 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 
 import { Cape } from '@/components/Cape'
-import { LazyMotion, LazyTicket } from '@/components/Deferred'
+import { LazyMotion, LazyTicket, RegisterSW } from '@/components/Deferred'
 import { Header } from '@/components/Header'
 import { IconPhone } from '@/components/icons'
 import { MapEmbed } from '@/components/MapEmbed'
@@ -10,6 +10,7 @@ import { Menu } from '@/components/Menu'
 import { HoursTable, OpenStatus } from '@/components/OpenStatus'
 import { getMenu, getSettings } from '@/lib/data'
 import { getDict, hasLocale } from '@/lib/i18n'
+import { faq as buildFaq } from '@/lib/faq'
 import { jsonLd } from '@/lib/jsonld'
 
 export const revalidate = 60
@@ -25,6 +26,7 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
   if (!hasLocale(lang)) notFound()
   const t = getDict(lang)
   const [menu, s] = await Promise.all([getMenu(lang), getSettings(lang)])
+  const faq = buildFaq(lang, s, menu, t)
   const tel = `tel:${s.phone.replace(/[^\d+]/g, '')}`
   const q = `${s.lat},${s.lng}`
 
@@ -164,6 +166,19 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
             </div>
           </div>
         </section>
+        <section className="faq" id="faq" aria-labelledby="faq-title">
+          <h2 className="display faq__title" id="faq-title">
+            {t.faq.title}
+          </h2>
+          <div className="faq__list" data-reveal>
+            {faq.map((f) => (
+              <details key={f.q}>
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
       </main>
 
       <footer className="footer">
@@ -177,7 +192,10 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
           <nav aria-label="Footer">
             <a href="#menu">{t.nav.menu}</a>
             <a href="#visit">{t.nav.visit}</a>
+            <a href={`/${lang}/menu`}>{t.footer.menu}</a>
             <a href={`/${lang}/qr`}>QR</a>
+            <a href={`/${lang}/privacy`}>{t.footer.privacy}</a>
+            <a href={`/${lang}/terms`}>{t.footer.terms}</a>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- the admin is a separate root layout */}
             <a href="/admin" rel="nofollow">
               {t.footer.admin}
@@ -188,7 +206,8 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
 
       <LazyTicket t={t} lang={lang} settings={s} drinks={menu.find((c) => c.slug === 'drinks')?.dishes ?? []} />
       <LazyMotion />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(lang, menu, s, t) }} />
+      <RegisterSW />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(lang, menu, s, t, faq) }} />
     </>
   )
 }

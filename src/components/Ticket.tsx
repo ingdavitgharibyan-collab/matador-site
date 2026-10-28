@@ -7,9 +7,11 @@ import type { MenuDish, SiteSettings } from '@/lib/data'
 import { canOrder, type OrderGate } from '@/lib/hours'
 import { type Dict, fill, formatPrice } from '@/lib/i18n'
 import { defaultOpts, needsChoice } from '@/lib/menu'
-import { placeOrder } from '@/app/(site)/actions'
+import { checkPromo, placeOrder } from '@/app/(site)/actions'
+import type { Promo } from '@/lib/promo'
 import { normalizePhone, orderMessage, orderRef } from '@/lib/order'
 import { quote } from '@/lib/pricing'
+import { track } from '@/lib/track'
 import { type Line, MAX_QTY, useCart } from './cart'
 import { IconCheck, IconClose, IconMinus, IconPhone, IconPlus, IconTelegram, IconWhatsapp } from './icons'
 
@@ -48,6 +50,9 @@ export function Ticket({
   const sending = useRef(false)
   const openedAt = useRef(0)
   const [busy, setBusy] = useState(false)
+  const [promo, setPromo] = useState<Promo | null>(null)
+  const [promoInput, setPromoInput] = useState('')
+  const [promoMsg, setPromoMsg] = useState('')
   const focusAfterRemove = useRef<number | null>(null)
   const linesRef = useRef<HTMLUListElement>(null)
   const emptyRef = useRef<HTMLAnchorElement>(null)
@@ -72,6 +77,7 @@ export function Ticket({
       if (tbl) {
         setTable(tbl)
         setMode('table')
+        track('table')
       }
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once
@@ -142,7 +148,7 @@ export function Ticket({
     return fill(t.status.closedNote, { n: s && !s.open && s.closureNote ? `. ${s.closureNote}` : '' })
   })()
 
-  const { zone, fee, freeFrom, minOrder, belowMin, total } = quote(cart.subtotal, mode, settings, zoneId)
+  const { zone, fee, freeFrom, minOrder, belowMin, discount, total } = quote(cart.subtotal, mode, settings, zoneId, promo)
   const hasDrink = cart.lines.some((l) => l.dish.category === 'drinks')
   const offer = hasDrink ? [] : drinks.filter((d) => d.available && !needsChoice(d)).slice(0, 3)
 
@@ -183,6 +189,8 @@ export function Ticket({
       table,
       zone: mode === 'delivery' && zone ? `${zone.name}, ${fill(t.ticket.eta, { a: zone.etaMin, b: zone.etaMax })}` : undefined,
       fee,
+      discount,
+      promo: promo?.code,
       payment: pay,
       name: form.name,
       phone: phone!,
@@ -215,6 +223,7 @@ export function Ticket({
         flat: form.flat,
         note: form.note,
         channel,
+        promo: promo?.code,
         website: honeypot.current?.value ?? '',
         elapsed,
       })
@@ -260,6 +269,7 @@ export function Ticket({
       w.location.href = url
     } else window.open(url, '_blank', 'noopener')
     markSent(r.ref, 'WhatsApp', r.token, r.total)
+    track('send_wa', false)
   }
 
   const sendTg = async (e: React.SyntheticEvent) => {
@@ -278,6 +288,7 @@ export function Ticket({
     setTg({ ok, text: r.message })
     // the chat opens from a real link the guest taps next (no pop-up after an await: iOS blocks those)
     markSent(r.ref, 'Telegram', r.token, r.total)
+    track('send_tg', false)
   }
 
   const phoneHref = `tel:${settings.phone.replace(/[^\d+]/g, '')}`
@@ -482,6 +493,14 @@ export function Ticket({
                       </button>
                     </div>
                     <span className="line__price">{formatPrice(l.qty * l.unit)}</span>
+                    {l.changedFrom && (
+                      <p className="line__note" role="status">
+                        {fill(t.ticket.priceChanged, { a: formatPrice(l.changedFrom), b: formatPrice(l.unit) })}{' '}
+                        <button type="button" className="ticket__clear" onClick={cart.ackPrices}>
+                          OK
+                        </button>
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -491,6 +510,14 @@ export function Ticket({
                   <span>{t.ticket.subtotal}</span>
                   <span>{formatPrice(cart.subtotal)}</span>
                 </div>
+                {discount > 0 && (
+                  <div>
+                    <span>
+                      {t.ticket.discount} ({promo?.code})
+                    </span>
+                    <span>−{formatPrice(discount)}</span>
+                  </div>
+                )}
                 {mode === 'delivery' && (
                   <div>
                     <span>{t.ticket.delivery}</span>
@@ -515,6 +542,50 @@ export function Ticket({
                   <p className="sums__note">{fill(t.ticket.minOrder, { p: formatPrice(minOrder), r: formatPrice(minOrder - cart.subtotal) })}</p>
                 )}
               </div>
+
+              <details className="promo" open={Boolean(promo)}>
+                <summary>{t.ticket.promo}</summary>
+                {promo ? (
+                  <p className="promo__on">
+                    {promo.code} ✓{' '}
+                    <button type="button" className="ticket__clear" onClick={() => setPromo(null)}>
+                      {t.ticket.removePromo}
+                    </button>
+                  </p>
+                ) : (
+                  <div className="promo__row">
+                    <label className="sr-only" htmlFor={`${id}-promo`}>
+                      {t.ticket.promo}
+                    </label>
+                    <input
+                      id={`${id}-promo`}
+                      value={promoInput}
+                      onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      maxLength={24}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn--ink"
+                      onClick={async () => {
+                        const r = await checkPromo(promoInput, cart.subtotal)
+                        if (r.ok) {
+                          setPromo({ code: r.code, kind: r.kind as Promo['kind'], value: r.value, minOrder: 0 })
+                          setPromoMsg('')
+                        } else setPromoMsg(r.error === 'min' ? fill(t.ticket.promoMin, { p: formatPrice(r.minOrder ?? 0) }) : t.ticket.promoBad)
+                      }}
+                    >
+                      {t.ticket.apply}
+                    </button>
+                  </div>
+                )}
+                {promoMsg && (
+                  <p className="field__err" role="alert">
+                    {promoMsg}
+                  </p>
+                )}
+              </details>
 
               {offer.length > 0 && (
                 <div className="upsell">
@@ -617,7 +688,16 @@ export function Ticket({
                 </div>
                 {/* bots fill every field; people never see this one */}
                 <input ref={honeypot} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp" defaultValue="" />
-                <p className="ticket__fine">{t.ticket.notice}</p>
+                <p className="ticket__fine">
+                  {t.ticket.notice}{' '}
+                  <a href={`/${lang}/privacy`} target="_blank">
+                    {t.footer.privacy}
+                  </a>
+                  {' · '}
+                  <a href={`/${lang}/terms`} target="_blank">
+                    {t.footer.terms}
+                  </a>
+                </p>
               </form>
 
               <button

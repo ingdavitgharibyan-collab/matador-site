@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useEffect } from 'react'
 
 import { type Dict, type Locale, localeLong, localeNames, locales } from '@/lib/i18n'
+import { track } from '@/lib/track'
 import { useCart } from './cart'
 import { IconTicket } from './icons'
 
@@ -18,6 +19,17 @@ export function Header({ t, locale }: { t: Dict; locale: Locale }) {
       open()
     }
   }, [open])
+  // calls and delivery-service clicks anywhere on the page count in the funnel
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement).closest?.('a')
+      if (!a) return
+      if (a.getAttribute('href')?.startsWith('tel:')) track('call', false)
+      else if (a.closest('.partners')) track('partner', false)
+    }
+    document.addEventListener('click', onClick)
+    return () => document.removeEventListener('click', onClick)
+  }, [])
   return (
     <header className="header">
       <a className="header__brand" href={`/${locale}`}>

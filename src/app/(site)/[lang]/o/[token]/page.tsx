@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
 
 import { AutoRefresh } from '@/components/AutoRefresh'
+import { getSettings } from '@/lib/data'
 import { fill, formatPrice, getDict, hasLocale } from '@/lib/i18n'
 
 export const dynamic = 'force-dynamic'
@@ -22,6 +23,7 @@ export default async function OrderPage({ params }: PageProps<'/[lang]/o/[token]
   if (!o) notFound()
   const step = o.status === 'out' ? 3 : STEPS.indexOf(o.status as (typeof STEPS)[number])
   const final = o.status === 'cancelled' || o.status === 'rejected'
+  const { googleReviewUrl } = await getSettings(lang)
 
   return (
     <main className="order">
@@ -50,6 +52,11 @@ export default async function OrderPage({ params }: PageProps<'/[lang]/o/[token]
         <p className="order__total">
           {t.ticket.total}: {formatPrice(o.total)}
         </p>
+        {o.status === 'delivered' && googleReviewUrl && (
+          <a className="btn btn--red" href={googleReviewUrl} target="_blank" rel="noopener noreferrer">
+            {t.ticket.review}
+          </a>
+        )}
         <p className="ticket__fine">{t.order.lead}</p>
         <a className="btn btn--ink" href={`/${lang}`}>
           {t.qr.back}

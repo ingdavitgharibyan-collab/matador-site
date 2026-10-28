@@ -25,6 +25,8 @@ type OrderDoc = {
   lines?: { qty?: number | null; label?: string | null; unit?: number | null }[] | null
   subtotal?: number | null
   fee?: number | null
+  discount?: number | null
+  promo?: string | null
   total: number
   createdAt?: string
   kitchenMessageId?: string | null
@@ -93,7 +95,7 @@ export function kitchenText(o: OrderDoc, lang: Lang = cfg().lang) {
   const where = o.mode === 'delivery' ? [o.zone, o.address, o.flat].filter(Boolean).join(', ') : ''
   const lines = (o.lines ?? []).map((l) => `${l.qty}× ${l.label}`)
   const money = [
-    `${k.dishes} ${amd(o.subtotal)}${o.fee ? ` · ${k.fee} ${amd(o.fee)}` : ''}`,
+    `${k.dishes} ${amd(o.subtotal)}${o.discount ? ` · −${amd(o.discount)}${o.promo ? ` (${o.promo})` : ''}` : ''}${o.fee ? ` · ${k.fee} ${amd(o.fee)}` : ''}`,
     `${k.total} ${amd(o.total)}`,
     o.payment ? `${k.pay}: ${k[o.payment] ?? o.payment}` : '',
   ].filter(Boolean)

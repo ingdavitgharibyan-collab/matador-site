@@ -70,8 +70,10 @@ export interface Config {
     orders: Order;
     dishes: Dish;
     categories: Category;
+    'promo-codes': PromoCode;
     media: Media;
     users: User;
+    metrics: Metric;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,8 +84,10 @@ export interface Config {
     orders: OrdersSelect<false> | OrdersSelect<true>;
     dishes: DishesSelect<false> | DishesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    'promo-codes': PromoCodesSelect<false> | PromoCodesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    metrics: MetricsSelect<false> | MetricsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -165,6 +169,8 @@ export interface Order {
     | null;
   subtotal?: number | null;
   fee?: number | null;
+  discount?: number | null;
+  promo?: string | null;
   channel?: string | null;
   lang?: string | null;
   statusLog?:
@@ -299,6 +305,27 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promo-codes".
+ */
+export interface PromoCode {
+  id: number;
+  code: string;
+  active?: boolean | null;
+  kind: 'percent' | 'fixed' | 'free_delivery';
+  value?: number | null;
+  minOrder?: number | null;
+  validFrom?: string | null;
+  validTo?: string | null;
+  /**
+   * Empty = unlimited
+   */
+  maxUses?: number | null;
+  uses?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -323,6 +350,25 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "metrics".
+ */
+export interface Metric {
+  id: number;
+  day: string;
+  counts:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -361,12 +407,20 @@ export interface PayloadLockedDocument {
         value: number | Category;
       } | null)
     | ({
+        relationTo: 'promo-codes';
+        value: number | PromoCode;
+      } | null)
+    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'metrics';
+        value: number | Metric;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -439,6 +493,8 @@ export interface OrdersSelect<T extends boolean = true> {
       };
   subtotal?: T;
   fee?: T;
+  discount?: T;
+  promo?: T;
   channel?: T;
   lang?: T;
   statusLog?:
@@ -507,6 +563,23 @@ export interface CategoriesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promo-codes_select".
+ */
+export interface PromoCodesSelect<T extends boolean = true> {
+  code?: T;
+  active?: T;
+  kind?: T;
+  value?: T;
+  minOrder?: T;
+  validFrom?: T;
+  validTo?: T;
+  maxUses?: T;
+  uses?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -570,6 +643,16 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "metrics_select".
+ */
+export interface MetricsSelect<T extends boolean = true> {
+  day?: T;
+  counts?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -701,6 +784,17 @@ export interface Setting {
         id?: string | null;
       }[]
     | null;
+  legalName?: string | null;
+  taxId?: string | null;
+  privacyEmail?: string | null;
+  /**
+   * After this the name, phone and address are erased automatically; only the numbers stay.
+   */
+  retentionDays?: number | null;
+  googleReviewUrl?: string | null;
+  googleMapsUrl?: string | null;
+  yandexMapsUrl?: string | null;
+  twoGisUrl?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -757,6 +851,14 @@ export interface SettingsSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  legalName?: T;
+  taxId?: T;
+  privacyEmail?: T;
+  retentionDays?: T;
+  googleReviewUrl?: T;
+  googleMapsUrl?: T;
+  yandexMapsUrl?: T;
+  twoGisUrl?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

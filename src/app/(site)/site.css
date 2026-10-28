@@ -1393,6 +1393,38 @@ html.has-dialog {
   font-size: 0.8125rem;
 }
 
+.line__note {
+  grid-column: 1 / -1;
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--barrera);
+}
+.promo summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--barrera);
+}
+.promo__row {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+.promo__row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 2px solid color-mix(in srgb, var(--negro) 30%, transparent);
+  border-radius: 0;
+  background: #fffaf2;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.promo__on {
+  margin-top: 8px;
+  font-weight: 800;
+}
+
 /* flying token when a dish is added */
 .token {
   position: fixed;
@@ -1603,6 +1635,63 @@ html.has-dialog {
   }
 }
 
+/* ---------------------------------------------------------------- faq */
+.faq {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 32px;
+  padding: 0 var(--m) var(--gap);
+}
+.faq__title {
+  grid-column: 1 / span 5;
+  font-size: var(--t-h2);
+  max-width: 9ch;
+}
+.faq__list {
+  grid-column: 6 / span 7;
+  display: grid;
+  gap: 4px;
+}
+.faq details {
+  background: var(--negro-2);
+}
+.faq summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  font-weight: 700;
+  font-size: 1.125rem;
+  cursor: pointer;
+  list-style: none;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: '+';
+  color: var(--oro);
+  font-weight: 900;
+  transition: transform 0.25s var(--ease-out);
+}
+.faq details[open] summary::after {
+  transform: rotate(45deg);
+}
+.faq details p {
+  padding: 0 20px 20px;
+  max-width: 62ch;
+}
+@media (max-width: 860px) {
+  .faq__title,
+  .faq__list {
+    grid-column: 1 / -1;
+  }
+  .faq__title {
+    max-width: none;
+  }
+}
+
 /* ---------------------------------------------------------------- footer */
 .footer {
   background: var(--albero);
@@ -1736,6 +1825,57 @@ html.has-dialog {
 .order__total {
   font-weight: 900;
   font-size: 1.375rem;
+}
+
+/* ---------------------------------------------------------------- legal + printable menu */
+.legal {
+  padding: clamp(32px, 6vw, 80px) var(--m) var(--gap);
+  background: var(--cal);
+  color: var(--negro);
+  min-height: 100svh;
+}
+.legal__card {
+  max-width: 68ch;
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+  justify-items: start;
+}
+.legal__title {
+  font-size: clamp(2.25rem, 6vw, 4rem);
+}
+.legal__lead {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.legal h2 {
+  margin-top: 18px;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+.print-menu__list {
+  display: grid;
+  gap: 14px;
+}
+.print-menu__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 1.125rem;
+}
+@media print {
+  .print-menu .qr__actions,
+  .header,
+  .skip {
+    display: none;
+  }
+  .legal {
+    padding: 0;
+  }
+}
+.legal section {
+  display: grid;
+  gap: 8px;
 }
 
 /* ---------------------------------------------------------------- motion off */

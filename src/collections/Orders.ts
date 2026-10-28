@@ -124,6 +124,8 @@ export const Orders: CollectionConfig = {
       fields: [
         { name: 'subtotal', label: L('Ուտեստներ, ֏', 'Блюда, ֏', 'Dishes, ֏'), type: 'number', admin: { readOnly: true } },
         { name: 'fee', label: L('Առաքում, ֏', 'Доставка, ֏', 'Delivery, ֏'), type: 'number', admin: { readOnly: true } },
+        { name: 'discount', label: L('Զեղչ, ֏', 'Скидка, ֏', 'Discount, ֏'), type: 'number', admin: { readOnly: true } },
+        { name: 'promo', label: L('Պրոմո կոդ', 'Промокод', 'Promo code'), type: 'text', admin: { readOnly: true } },
         { name: 'channel', label: L('Ալիք', 'Канал', 'Channel'), type: 'text', admin: { readOnly: true } },
         { name: 'lang', label: L('Լեզու', 'Язык', 'Language'), type: 'text', admin: { readOnly: true } },
       ],

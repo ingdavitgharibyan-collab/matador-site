@@ -10,6 +10,7 @@ import { businessDayStart, canOrder, yerevanNow } from '@/lib/hours'
 import { getDict, hasLocale } from '@/lib/i18n'
 import { normalizePhone, orderMessage } from '@/lib/order'
 import { type LineInput, type Mode, priceLines, quote } from '@/lib/pricing'
+import { findPromo } from '@/lib/promo'
 import { notifyNew } from '@/lib/telegram'
 
 export type PlaceOrderInput = {
@@ -25,6 +26,7 @@ export type PlaceOrderInput = {
   flat?: string
   note?: string
   channel: 'whatsapp' | 'telegram'
+  promo?: string
   /** honeypot: a field people never see */
   website?: string
   /** ms the ticket was open before sending */
@@ -86,7 +88,10 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
   if (!gate.ok) return { ok: false, error: gate.reason }
 
   const subtotal = lines.reduce((s, l) => s + l.qty * l.unit, 0)
-  const q = quote(subtotal, mode, settings, input.zoneId)
+  const payloadForPromo = await getPayload({ config })
+  const promoCheck = input.promo ? await findPromo(payloadForPromo, input.promo, subtotal, serverNow()) : null
+  const promo = promoCheck?.ok ? promoCheck.promo : null
+  const q = quote(subtotal, mode, settings, input.zoneId, promo)
   if (q.belowMin) return { ok: false, error: 'min' }
   const payment = settings.paymentMethods.includes(input.payment) ? input.payment : settings.paymentMethods[0]
 
@@ -119,12 +124,19 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
       lines: lines.map((l) => ({ qty: l.qty, label: l.label, unit: l.unit, dish: l.id, opts: l.opts })),
       subtotal,
       fee: q.fee,
+      discount: q.discount,
+      promo: promo?.code,
       total: q.total,
       channel: input.channel,
       lang,
       ipHash: createHash('sha256').update(ip).digest('hex').slice(0, 16),
     },
   })
+
+  if (promoCheck?.ok) {
+    const p = await payload.findByID({ collection: 'promo-codes', id: promoCheck.id, depth: 0, overrideAccess: true })
+    await payload.update({ collection: 'promo-codes', id: promoCheck.id, data: { uses: (p.uses ?? 0) + 1 }, overrideAccess: true })
+  }
 
   // the kitchen hears about it at once; a Telegram outage never loses the order
   try {
@@ -142,6 +154,8 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
       table: input.table,
       zone,
       fee: q.fee,
+      discount: q.discount,
+      promo: promo?.code,
       payment,
       name: clean(input.name, 60),
       phone,
@@ -152,4 +166,12 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     t,
   )
   return { ok: true, ref, token, total: q.total, message }
+}
+
+export type PromoResult = { ok: true; code: string; kind: string; value: number } | { ok: false; error: 'unknown' | 'min'; minOrder?: number }
+
+/** Check a promo code for the ticket (the order itself checks again). */
+export async function checkPromo(code: string, subtotal: number): Promise<PromoResult> {
+  const r = await findPromo(await getPayload({ config }), String(code ?? ''), Number(subtotal) || 0, serverNow())
+  return r.ok ? { ok: true, code: r.promo.code, kind: r.promo.kind, value: r.promo.value } : { ok: false, error: r.error, minOrder: r.minOrder }
 }

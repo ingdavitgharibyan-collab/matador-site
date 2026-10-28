@@ -27,6 +27,8 @@ const CSP = [
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
   "connect-src 'self'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
   'frame-src https://maps.google.com https://www.google.com',
   "object-src 'none'",
   "base-uri 'self'",
@@ -54,6 +56,7 @@ const nextConfig: NextConfig = {
         ],
       },
       { source: '/brand/:file*', headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000' }] },
+      { source: '/sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache' }] },
     ]
   },
 }

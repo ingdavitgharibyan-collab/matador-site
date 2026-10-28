@@ -9,6 +9,7 @@ import { defaultOpts, needsChoice, unitPrice, validOpts } from '@/lib/menu'
 import { Cape } from './Cape'
 import { useCart } from './cart'
 import { DishArt } from './DishArt'
+import { track } from '@/lib/track'
 import { IconCheck, IconChili, IconClose, IconMinus, IconPlus, IconStar } from './icons'
 
 const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -128,6 +129,7 @@ export function Menu({ menu, t }: { menu: MenuCategory[]; t: Dict }) {
 
   const onAdd = (dish: MenuDish, el: HTMLElement | null, n = 1, opts = defaultOpts(dish)) => {
     add(dish.id, n, validOpts(dish, opts))
+    track('add', false)
     if (el) flyToTicket(el)
     setDone(dish.id)
     window.setTimeout(() => setDone((cur) => (cur === dish.id ? null : cur)), 1400)
@@ -137,6 +139,7 @@ export function Menu({ menu, t }: { menu: MenuCategory[]; t: Dict }) {
   /* eslint-disable react-hooks/set-state-in-effect -- one-time hand-over from the pre-hydration queue */
   useEffect(() => {
     window.__mh = true
+    track('view')
     const queued = window.__mq ?? []
     window.__mq = []
     document.querySelectorAll('[data-add][data-done="true"]').forEach((b) => b.removeAttribute('data-done'))
@@ -156,7 +159,10 @@ export function Menu({ menu, t }: { menu: MenuCategory[]; t: Dict }) {
     const io = new IntersectionObserver(
       (entries) => {
         const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
-        if (hit) setActive(hit.target.id.replace('cat-', ''))
+        if (hit) {
+          setActive(hit.target.id.replace('cat-', ''))
+          track('menu')
+        }
       },
       { rootMargin: '-35% 0px -60% 0px' },
     )
@@ -178,13 +184,15 @@ export function Menu({ menu, t }: { menu: MenuCategory[]; t: Dict }) {
     if (!open && d.open) d.close()
   }, [open])
 
-  const toggle = (f: Filter) =>
+  const toggle = (f: Filter) => {
+    track('filter')
     setFilters((cur) => {
       const next = new Set(cur)
       if (next.has(f)) next.delete(f)
       else next.add(f)
       return next
     })
+  }
   const filterLabel: Record<Filter, string> = { spicy: t.menu.spicy, noPork: t.menu.noPork, veg: t.menu.veg }
 
   const pick = (groupOptionIds: string[], id: string, multi: boolean) =>
@@ -230,7 +238,10 @@ export function Menu({ menu, t }: { menu: MenuCategory[]; t: Dict }) {
               type="search"
               placeholder={t.menu.search}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                track('search')
+              }}
               enterKeyHint="search"
               autoComplete="off"
             />

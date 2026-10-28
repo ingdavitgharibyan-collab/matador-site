@@ -4,12 +4,14 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import type { MenuDish } from '@/lib/data'
 import { lineKey, lineLabel, unitPrice, validOpts } from '@/lib/menu'
+import { track } from '@/lib/track'
 
-export type Line = { key: string; id: string; qty: number; opts: string[] }
+export type Line = { key: string; id: string; qty: number; opts: string[]; seen?: number }
 export type LastOrder = { lines: Line[]; at: number }
 
 type Ctx = {
-  lines: (Line & { dish: MenuDish; label: string; unit: number })[]
+  lines: (Line & { dish: MenuDish; label: string; unit: number; changedFrom?: number })[]
+  ackPrices: () => void
   /** dishes that were in the ticket but are not available today; shown once, then dropped */
   gone: string[]
   dismissGone: () => void
@@ -46,7 +48,8 @@ export function sanitizeLines(input: unknown): Line[] {
     const opts = Array.isArray(l.opts) ? l.opts.map(String) : []
     const key = lineKey(id, opts)
     const prev = merged.get(key)
-    merged.set(key, { key, id, opts, qty: Math.min(MAX_QTY, (prev?.qty ?? 0) + qty) })
+    const seen = Number.isFinite(Number(l.seen)) && Number(l.seen) > 0 ? Number(l.seen) : prev?.seen
+    merged.set(key, { key, id, opts, qty: Math.min(MAX_QTY, (prev?.qty ?? 0) + qty), ...(seen ? { seen } : {}) })
   }
   return [...merged.values()]
 }
@@ -99,7 +102,9 @@ export function CartProvider({ dishes, children }: { dishes: MenuDish[]; childre
         const dish = byId.get(l.id)
         if (!dish?.available) return []
         const opts = validOpts(dish, l.opts)
-        return [{ ...l, opts, dish, label: lineLabel(dish, opts), unit: unitPrice(dish, opts) }]
+        const unit = unitPrice(dish, opts)
+        // the price the guest saw when adding: a change since then is shown, never applied silently
+        return [{ ...l, opts, dish, label: lineLabel(dish, opts), unit, changedFrom: l.seen && l.seen !== unit ? l.seen : undefined }]
       }),
     [raw, byId],
   )
@@ -113,14 +118,23 @@ export function CartProvider({ dishes, children }: { dishes: MenuDish[]; childre
   }, [])
   const add = useCallback((id: string, qty = 1, opts: string[] = []) => {
     const key = lineKey(id, opts)
+    const dish = byId.get(id)
+    const seen = dish ? unitPrice(dish, validOpts(dish, opts)) : undefined
     setRaw((prev) => {
       const cur = prev.find((l) => l.key === key)
-      if (!cur) return [...prev, { key, id, opts, qty: Math.min(MAX_QTY, qty) }]
+      if (!cur) return [...prev, { key, id, opts, qty: Math.min(MAX_QTY, qty), seen }]
       return prev.map((l) => (l.key === key ? { ...l, qty: Math.min(MAX_QTY, l.qty + qty) } : l))
     })
-  }, [])
+  }, [byId])
 
   const value: Ctx = {
+    ackPrices: () =>
+      setRaw((prev) =>
+        prev.map((l) => {
+          const d = byId.get(l.id)
+          return d ? { ...l, seen: unitPrice(d, validOpts(d, l.opts)) } : l
+        }),
+      ),
     lines,
     gone,
     dismissGone: () => setGone([]),
@@ -141,7 +155,10 @@ export function CartProvider({ dishes, children }: { dishes: MenuDish[]; childre
       setLastOrder(order)
     },
     isOpen,
-    open: () => setOpen(true),
+    open: () => {
+      track('ticket')
+      setOpen(true)
+    },
     close: () => setOpen(false),
   }
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

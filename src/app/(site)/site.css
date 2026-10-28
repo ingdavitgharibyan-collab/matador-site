@@ -379,10 +379,12 @@ html {
     width: auto;
     margin-bottom: 4px;
   }
+  /* a fixed box before the image arrives: the text below never jumps (CLS) */
   .hero__logo img {
     width: auto;
+    height: 30svh;
     max-width: 100%;
-    max-height: 30svh;
+    object-fit: contain;
   }
   /* phone: title, action and "open now · where" fit the first screen; the description follows */
   .hero__text {
@@ -464,8 +466,8 @@ html {
 }
 .cape--page {
   position: fixed;
-  inset: 0 -20vw;
-  z-index: 90;
+  inset: var(--header-h) -20vw 0;
+  z-index: 30;
 }
 
 /* ---------------------------------------------------------------- menu (the cartel) */
@@ -505,7 +507,7 @@ html {
   display: grid;
   gap: 2px;
 }
-.cats button {
+.cats a {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -521,23 +523,24 @@ html {
   text-transform: uppercase;
   font-size: clamp(1.5rem, 2.4vw, 2.25rem);
   line-height: 1;
+  text-decoration: none;
   transition:
     background-color 0.2s var(--ease-out),
     color 0.2s var(--ease-out),
     padding 0.25s var(--ease-out);
 }
-.cats button span {
+.cats a span {
   font-weight: 600;
   font-size: var(--t-small);
   font-stretch: 100%;
   font-variation-settings: 'wdth' 100;
   text-transform: none;
 }
-.cats button:hover {
+.cats a:hover {
   background: var(--albero-2);
   padding-left: 22px;
 }
-.cats button[aria-selected='true'] {
+.cats a[aria-current='true'] {
   background: var(--negro);
   color: var(--albero);
   padding-left: 22px;
@@ -545,8 +548,72 @@ html {
 .menu__stage {
   grid-column: 6 / span 7;
   position: relative;
-  overflow: clip;
-  min-height: 60vh;
+  display: grid;
+  gap: clamp(56px, 7vw, 96px);
+}
+.cat {
+  scroll-margin-top: calc(var(--header-h) + 24px);
+}
+.cat[hidden],
+.dish[hidden] {
+  display: none;
+}
+.tools {
+  display: grid;
+  gap: 12px;
+}
+.tools input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 2px solid var(--negro);
+  border-radius: 0;
+  background: var(--albero-2);
+  color: var(--negro);
+  font-weight: 600;
+}
+.tools input::placeholder {
+  color: color-mix(in srgb, var(--negro) 62%, transparent);
+}
+.tools input:focus {
+  outline: 3px solid var(--negro);
+  outline-offset: 2px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  background: var(--albero-2);
+  font-weight: 700;
+}
+.chips button svg {
+  width: 16px;
+  height: 16px;
+}
+.chips button[aria-pressed='true'] {
+  background: var(--negro);
+  color: var(--albero);
+}
+.tools__count {
+  min-height: 1.5em;
+  font-weight: 600;
+  color: var(--barrera);
+}
+.menu__empty {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  padding: 24px;
+  background: var(--albero-2);
+  font-weight: 600;
 }
 .panel__head {
   display: flex;
@@ -686,25 +753,105 @@ html {
     background: var(--albero);
     scrollbar-width: none;
   }
-  .cats button {
+  .cats a {
     width: auto;
     flex: none;
     font-size: 1.375rem;
     padding: 10px 14px;
   }
-  .cats button span {
+  .cats a span {
     display: none;
   }
-  .cats button:hover {
+  .cats a:hover {
     padding-left: 14px;
   }
-  .cats button[aria-selected='true'] {
+  .cats a[aria-current='true'] {
     padding-left: 14px;
+  }
+  .cat {
+    scroll-margin-top: calc(var(--header-h) + 76px);
   }
   .menu__crest {
     float: right;
     width: 88px;
     margin: 0 0 0 16px;
+  }
+}
+/* Armenian capitals lose the word shapes readers scan by: dish names and categories stay in sentence case */
+:lang(hy) .dish__name,
+:lang(hy) .cats a {
+  text-transform: none;
+  font-stretch: 75%;
+  font-variation-settings: 'wdth' 75;
+  font-weight: 800;
+}
+.opts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.opts legend {
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+.opts legend span {
+  font-weight: 600;
+  font-size: var(--t-small);
+  color: var(--barrera);
+}
+.opts label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--albero) 30%, var(--cal));
+  font-weight: 700;
+  cursor: pointer;
+}
+.opts input {
+  position: absolute;
+  opacity: 0;
+}
+.opts label:has(input:checked) {
+  background: var(--negro);
+  color: var(--cal);
+}
+.opts label:has(input:focus-visible) {
+  outline: 3px solid var(--oro);
+  outline-offset: 2px;
+}
+.opts__price {
+  font-weight: 800;
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  .sheet {
+    width: 100vw;
+    max-height: 92dvh;
+    margin: auto 0 0;
+  }
+  .sheet__art {
+    aspect-ratio: 3 / 1;
+  }
+  .sheet__row {
+    position: sticky;
+    bottom: 0;
+    flex-wrap: nowrap;
+    margin: 0 calc(-1 * clamp(20px, 4vw, 40px)) calc(-1 * clamp(20px, 4vw, 40px));
+    padding: 12px clamp(20px, 4vw, 40px);
+    background: var(--cal);
+  }
+  .sheet__add {
+    flex: 1;
+    min-width: 0;
+    white-space: normal;
+    line-height: 1.15;
   }
 }
 @media (max-width: 560px) {
@@ -905,17 +1052,24 @@ dialog[open].ticket .ticket__paper {
 }
 .line {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name name' 'qty price';
   gap: 12px;
   align-items: center;
   padding: 10px 12px;
   background: color-mix(in srgb, var(--albero) 28%, var(--cal));
 }
 .line__name {
+  grid-area: name;
   font-weight: 700;
   line-height: 1.25;
 }
+.line .stepper {
+  grid-area: qty;
+  justify-self: start;
+}
 .line__price {
+  grid-area: price;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -1184,6 +1338,52 @@ dialog[open].ticket .ticket__paper {
 }
 html.has-dialog {
   overflow: hidden;
+}
+
+.sums .progress {
+  display: grid;
+  justify-content: stretch;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--barrera);
+}
+.progress__bar {
+  height: 8px;
+  background: color-mix(in srgb, var(--albero) 40%, var(--cal));
+  position: relative;
+  overflow: hidden;
+}
+.progress__bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--muleta);
+  transform-origin: left;
+  transform: scaleX(var(--p, 0));
+  transition: transform 0.4s var(--ease-out);
+}
+.upsell {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+.upsell .chips button {
+  background: color-mix(in srgb, var(--albero) 35%, var(--cal));
+}
+.upsell .chips button:hover {
+  background: var(--albero);
+}
+.seg--zones label {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+}
+.seg--zones small {
+  font-weight: 600;
+  font-size: 0.8125rem;
 }
 
 /* flying token when a dish is added */

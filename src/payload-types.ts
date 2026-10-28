@@ -167,6 +167,36 @@ export interface Dish {
   signature?: boolean | null;
   available?: boolean | null;
   /**
+   * Pork, bacon or pork fat
+   */
+  containsPork?: boolean | null;
+  vegetarian?: boolean | null;
+  allergens?: ('gluten' | 'milk' | 'egg' | 'sesame' | 'mustard' | 'nuts' | 'soy' | 'celery')[] | null;
+  /**
+   * Choices the guest makes: bread (one of), sauce (one of), "without…" or extras (several). The first option of a required one-of group is preselected.
+   */
+  optionGroups?:
+    | {
+        name: string;
+        /**
+         * Several may be picked
+         */
+        multi?: boolean | null;
+        required?: boolean | null;
+        options?:
+          | {
+              name: string;
+              /**
+               * Extra AMD, 0 = free
+               */
+              price?: number | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Real photo of the dish; replaces the drawing
    */
   photo?: (number | null) | Media;
@@ -349,6 +379,24 @@ export interface DishesSelect<T extends boolean = true> {
   spicy?: T;
   signature?: T;
   available?: T;
+  containsPork?: T;
+  vegetarian?: T;
+  allergens?: T;
+  optionGroups?:
+    | T
+    | {
+        name?: T;
+        multi?: T;
+        required?: T;
+        options?:
+          | T
+          | {
+              name?: T;
+              price?: T;
+              id?: T;
+            };
+        id?: T;
+      };
   photo?: T;
   art?: T;
   updatedAt?: T;
@@ -521,11 +569,43 @@ export interface Setting {
   pauseNote?: string | null;
   paymentMethods?: ('cash' | 'card_courier' | 'idram' | 'telcell' | 'transfer')[] | null;
   /**
-   * AMD, 0 = free
+   * Where you deliver. The guest picks one; its fee, minimum and time are shown before sending.
+   */
+  deliveryZones?:
+    | {
+        /**
+         * e.g. Kentron, Arabkir
+         */
+        name: string;
+        /**
+         * AMD
+         */
+        fee?: number | null;
+        /**
+         * AMD
+         */
+        minOrder?: number | null;
+        /**
+         * AMD, empty = never free
+         */
+        freeFrom?: number | null;
+        /**
+         * minutes
+         */
+        etaMin?: number | null;
+        /**
+         * minutes
+         */
+        etaMax?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * AMD, used when no zones are set
    */
   deliveryFee?: number | null;
   /**
-   * AMD
+   * AMD, used when no zones are set
    */
   freeDeliveryFrom?: number | null;
   /**
@@ -574,6 +654,17 @@ export interface SettingsSelect<T extends boolean = true> {
   lastOrderMinutes?: T;
   pauseNote?: T;
   paymentMethods?: T;
+  deliveryZones?:
+    | T
+    | {
+        name?: T;
+        fee?: T;
+        minOrder?: T;
+        freeFrom?: T;
+        etaMin?: T;
+        etaMax?: T;
+        id?: T;
+      };
   deliveryFee?: T;
   freeDeliveryFrom?: T;
   partners?:

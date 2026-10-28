@@ -30,7 +30,7 @@ export function MapEmbed({ lat, lng, title, label }: { lat: number; lng: number;
             <circle cx="200" cy="230" r="120" fill="none" stroke="#7a1013" strokeWidth="18" />
             <circle cx="200" cy="230" r="96" fill="#d9a35a" opacity="0.14" />
           </svg>
-          <Image src="/brand/bull-520.webp" alt="" width={520} height={512} />
+          <Image src="/brand/bull-520.webp" alt="" width={520} height={512} sizes="132px" />
           <button type="button" className="btn btn--red" onClick={() => setOn(true)}>
             <IconPin /> {label}
           </button>

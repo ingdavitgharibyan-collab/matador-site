@@ -122,8 +122,31 @@ export const Settings: GlobalConfig = {
                 { label: 'Bank transfer', value: 'transfer' },
               ],
             },
-            { name: 'deliveryFee', type: 'number', defaultValue: 0, admin: { description: 'AMD, 0 = free' } },
-            { name: 'freeDeliveryFrom', type: 'number', admin: { description: 'AMD' } },
+            {
+              name: 'deliveryZones',
+              type: 'array',
+              admin: { description: 'Where you deliver. The guest picks one; its fee, minimum and time are shown before sending.' },
+              fields: [
+                { name: 'name', type: 'text', localized: true, required: true, admin: { description: 'e.g. Kentron, Arabkir' } },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'fee', type: 'number', defaultValue: 500, min: 0, admin: { description: 'AMD' } },
+                    { name: 'minOrder', type: 'number', defaultValue: 0, min: 0, admin: { description: 'AMD' } },
+                    { name: 'freeFrom', type: 'number', min: 0, admin: { description: 'AMD, empty = never free' } },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'etaMin', type: 'number', defaultValue: 30, min: 0, admin: { description: 'minutes' } },
+                    { name: 'etaMax', type: 'number', defaultValue: 45, min: 0, admin: { description: 'minutes' } },
+                  ],
+                },
+              ],
+            },
+            { name: 'deliveryFee', type: 'number', defaultValue: 0, admin: { description: 'AMD, used when no zones are set' } },
+            { name: 'freeDeliveryFrom', type: 'number', admin: { description: 'AMD, used when no zones are set' } },
             {
               name: 'partners',
               type: 'array',

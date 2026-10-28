@@ -1,4 +1,4 @@
-import { type Dict, formatPrice } from './i18n'
+import { type Dict, fill, formatPrice } from './i18n'
 import { yerevanNow } from './hours'
 
 /**
@@ -29,12 +29,15 @@ export function orderRef(date = new Date()) {
 export type OrderDraft = {
   ref: string
   lines: { name: string; qty: number; price: number }[]
-  mode: 'delivery' | 'pickup'
+  mode: 'delivery' | 'pickup' | 'table'
+  table?: string
+  zone?: string
   fee: number
   payment: string
   name: string
   phone: string
   address: string
+  flat?: string
   note: string
 }
 
@@ -48,18 +51,26 @@ export function orderMessage(o: OrderDraft, t: Dict) {
   const { subtotal, total } = orderTotals(o)
   const tk = t.ticket
   const blocks = [
-    [`${tk.msgHello}`, `${tk.orderRef} ${o.ref}`],
+    [`${tk.msgHello}`, `${tk.orderRef} ${o.ref}`, ...(o.mode === 'table' && o.table ? [fill(tk.modeTable, { n: o.table })] : [])],
     o.lines.map((l) => `• ${l.qty} × ${l.name} — ${formatPrice(l.qty * l.price)}`),
     [
       `${tk.subtotal}: ${formatPrice(subtotal)}`,
-      o.mode === 'delivery' ? `${tk.delivery}: ${o.fee ? formatPrice(o.fee) : tk.free}` : `${tk.mode}: ${tk.modePickup}`,
+      o.mode === 'delivery'
+        ? `${tk.delivery}${o.zone ? ` (${o.zone})` : ''}: ${o.fee ? formatPrice(o.fee) : tk.free}`
+        : o.mode === 'pickup'
+          ? `${tk.mode}: ${tk.modePickup}`
+          : `${tk.mode}: ${fill(tk.modeTable, { n: o.table ?? '' })}`,
       `${tk.total}: ${formatPrice(total)}`,
       `${tk.payment}: ${tk.pay[o.payment] ?? o.payment}`,
     ],
     [
       `${tk.name}: ${o.name.trim()}`,
       `${tk.phone}: ${o.phone}`,
-      ...(o.mode === 'delivery' ? [`${tk.address}: ${o.address.trim().replace(/\s+/g, ' ')}`] : []),
+      ...(o.mode === 'delivery'
+        ? [
+            `${tk.address}: ${[o.address, o.flat ?? ''].map((x) => x.trim().replace(/\s+/g, ' ')).filter(Boolean).join(', ')}`,
+          ]
+        : []),
       ...(o.note.trim() ? [`${tk.note}: ${o.note.trim().replace(/\s+/g, ' ')}`] : []),
     ],
   ]

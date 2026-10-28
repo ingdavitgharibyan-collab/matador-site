@@ -35,7 +35,7 @@ describe('orderMessage', () => {
     note: 'առանց\n\nսոխի',
   }
   it('delivery: ref, lines, totals, payment, address; note on one line; no double blank lines', () => {
-    const m = orderMessage({ ...base, mode: 'delivery' }, getDict('hy'))
+    const m = orderMessage({ ...base, mode: 'delivery' }, getDict('hy')).replace(/\u00a0/g, ' ')
     expect(m).toContain('M-2810-2114')
     expect(m).toContain('• 2 × Հավով շաուրմա — 3 000 ֏')
     expect(m).toContain('4 100 ֏') // 3 600 + 500
@@ -45,7 +45,7 @@ describe('orderMessage', () => {
     expect(m).not.toMatch(/\n\n\n/)
   })
   it('pickup: no address line and no fee', () => {
-    const m = orderMessage({ ...base, mode: 'pickup', fee: 0 }, getDict('en'))
+    const m = orderMessage({ ...base, mode: 'pickup', fee: 0 }, getDict('en')).replace(/\u00a0/g, ' ')
     expect(m).not.toContain('Address')
     expect(m).toContain("I'll pick it up")
     expect(m).toContain('Total: 3 600 ֏')
@@ -62,9 +62,12 @@ it('orderRef is Yerevan time', () => {
 
 describe('sanitizeLines', () => {
   it('integers 1–99, string ids, duplicates merged, junk dropped', () => {
-    expect(sanitizeLines([{ id: 1, qty: '5' }, { id: '1', qty: 2.7 }, { id: '2', qty: 500 }, { id: '3', qty: 0 }, null, 'x'])).toEqual([
-      { id: '1', qty: 7 },
-      { id: '2', qty: 99 },
+    expect(
+      sanitizeLines([{ id: 1, qty: '5' }, { id: '1', qty: 2.7 }, { id: '2', qty: 500 }, { id: '3', qty: 0 }, null, 'x', { id: '1', qty: 1, opts: [7] }]),
+    ).toEqual([
+      { key: '1', id: '1', opts: [], qty: 7 },
+      { key: '2', id: '2', opts: [], qty: 99 },
+      { key: '1:7', id: '1', opts: ['7'], qty: 1 },
     ])
     expect(sanitizeLines('{bad')).toEqual([])
   })

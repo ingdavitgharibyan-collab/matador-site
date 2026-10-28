@@ -3,30 +3,35 @@
 import Image from 'next/image'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
-import type { SiteSettings } from '@/lib/data'
+import type { MenuDish, SiteSettings } from '@/lib/data'
 import { canOrder, type OrderGate } from '@/lib/hours'
 import { type Dict, fill, formatPrice } from '@/lib/i18n'
+import { defaultOpts, needsChoice } from '@/lib/menu'
 import { normalizePhone, orderMessage, orderRef } from '@/lib/order'
-import { MAX_QTY, useCart } from './cart'
+import { type Line, MAX_QTY, useCart } from './cart'
 import { IconCheck, IconClose, IconMinus, IconPhone, IconPlus, IconTelegram, IconWhatsapp } from './icons'
 
 const FORM_KEY = 'matador-ticket-form-v1'
 type Field = 'name' | 'phone' | 'address'
 type Sent = { ref: string; lines: { name: string; qty: number }[]; total: number; channel: string }
 
-export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
+const TABLE_KEY = 'matador-table'
+
+export function Ticket({ t, settings, drinks = [] }: { t: Dict; settings: SiteSettings; drinks?: MenuDish[] }) {
   const cart = useCart()
   const ref = useRef<HTMLDialogElement>(null)
   const id = useId()
   const formId = `${id}-form`
-  const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery')
+  const [mode, setMode] = useState<'delivery' | 'pickup' | 'table'>('delivery')
+  const [table, setTable] = useState('')
+  const [zoneId, setZoneId] = useState(settings.zones[0]?.id ?? '')
   const [pay, setPay] = useState(settings.paymentMethods[0] ?? 'cash')
-  const [form, setForm] = useState({ name: '', phone: '', address: '', note: '' })
+  const [form, setForm] = useState({ name: '', phone: '', address: '', flat: '', note: '' })
   const [tried, setTried] = useState(false)
   const [formError, setFormError] = useState('')
   const [tg, setTg] = useState<{ ok: boolean; text: string } | null>(null)
   const [sent, setSent] = useState<Sent | null>(null)
-  const [undo, setUndo] = useState<{ lines: { id: string; qty: number }[] } | null>(null)
+  const [undo, setUndo] = useState<{ lines: Line[] } | null>(null)
   const [now, setNow] = useState(() => new Date())
   const sending = useRef(false)
   const focusAfterRemove = useRef<number | null>(null)
@@ -35,13 +40,28 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
   const undoRef = useRef<HTMLButtonElement>(null)
 
   // ---------------------------------------------------------------- lifecycle
+  /* eslint-disable react-hooks/set-state-in-effect -- restore the guest's details and table once, from storage */
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(FORM_KEY) || 'null')
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- restore the guest's details once
-      if (saved) setForm((f) => ({ ...f, name: saved.name ?? '', phone: saved.phone ?? '', address: saved.address ?? '' }))
+      if (saved) {
+        setForm((f) => ({ ...f, name: saved.name ?? '', phone: saved.phone ?? '', address: saved.address ?? '', flat: saved.flat ?? '' }))
+        if (saved.zone && settings.zones.some((z) => z.id === saved.zone)) setZoneId(saved.zone)
+      }
     } catch {}
+    // a table QR (…?table=5) puts the ticket in table mode for this visit
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get('table')
+      if (fromUrl && /^\d{1,3}$/.test(fromUrl)) sessionStorage.setItem(TABLE_KEY, fromUrl)
+      const tbl = sessionStorage.getItem(TABLE_KEY)
+      if (tbl) {
+        setTable(tbl)
+        setMode('table')
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const acknowledgeSent = useCallback(() => {
     if (!sent) return
@@ -106,13 +126,15 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
     return fill(t.status.closedNote, { n: s && !s.open && s.closureNote ? `. ${s.closureNote}` : '' })
   })()
 
-  const fee =
-    mode === 'pickup' || cart.subtotal === 0
-      ? 0
-      : settings.freeDeliveryFrom && cart.subtotal >= settings.freeDeliveryFrom
-        ? 0
-        : settings.deliveryFee
+  const zone = settings.zones.find((z) => z.id === zoneId) ?? null
+  const baseFee = zone ? zone.fee : settings.deliveryFee
+  const freeFrom = zone ? zone.freeFrom : settings.freeDeliveryFrom
+  const minOrder = mode === 'delivery' && zone ? zone.minOrder : 0
+  const fee = mode !== 'delivery' || cart.subtotal === 0 ? 0 : freeFrom && cart.subtotal >= freeFrom ? 0 : baseFee
   const total = cart.subtotal + fee
+  const belowMin = minOrder > 0 && cart.subtotal < minOrder
+  const hasDrink = cart.lines.some((l) => l.dish.category === 'drinks')
+  const offer = hasDrink ? [] : drinks.filter((d) => d.available && !needsChoice(d)).slice(0, 3)
 
   const phone = normalizePhone(form.phone)
   const errors: Partial<Record<Field, string>> = {
@@ -126,6 +148,10 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
   const prepare = () => {
     setTried(true)
     const first = (['phone', 'name', 'address'] as Field[]).find((f) => errors[f])
+    if (belowMin) {
+      setFormError(fill(t.ticket.minOrder, { p: formatPrice(minOrder), r: formatPrice(minOrder - cart.subtotal) }))
+      return null
+    }
     if (first) {
       setFormError(t.ticket.fix)
       const el = document.getElementById(`${id}-${first}`)
@@ -135,17 +161,23 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
     }
     setFormError('')
     try {
-      localStorage.setItem(FORM_KEY, JSON.stringify({ name: form.name, phone: phone, address: form.address }))
+      localStorage.setItem(
+        FORM_KEY,
+        JSON.stringify({ name: form.name, phone: phone, address: form.address, flat: form.flat, zone: zoneId }),
+      )
     } catch {}
     const draft = {
       ref: orderRef(),
-      lines: cart.lines.map((l) => ({ name: l.dish.name, qty: l.qty, price: l.dish.price })),
+      lines: cart.lines.map((l) => ({ name: l.label, qty: l.qty, price: l.unit })),
       mode,
+      table,
+      zone: mode === 'delivery' && zone ? `${zone.name}, ${fill(t.ticket.eta, { a: zone.etaMin, b: zone.etaMax })}` : undefined,
       fee,
       payment: pay,
       name: form.name,
       phone: phone!,
       address: form.address,
+      flat: form.flat,
       note: form.note,
     }
     return { draft, text: orderMessage(draft, t) }
@@ -153,7 +185,7 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
 
   const markSent = (r: string, channel: string) => {
     cart.rememberOrder()
-    setSent({ ref: r, lines: cart.lines.map((l) => ({ name: l.dish.name, qty: l.qty })), total, channel })
+    setSent({ ref: r, lines: cart.lines.map((l) => ({ name: l.label, qty: l.qty })), total, channel })
   }
 
   const sendWa = () => {
@@ -178,7 +210,7 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
     } catch {}
     setTg({ ok, text: p.text })
     // the chat opens from a real link the guest taps next (no pop-up after an await: iOS blocks those)
-    setSent({ ref: p.draft.ref, lines: cart.lines.map((l) => ({ name: l.dish.name, qty: l.qty })), total, channel: 'Telegram' })
+    setSent({ ref: p.draft.ref, lines: cart.lines.map((l) => ({ name: l.label, qty: l.qty })), total, channel: 'Telegram' })
     cart.rememberOrder()
   }
 
@@ -232,7 +264,7 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
     >
       <div className="ticket__paper">
         <div className="ticket__head">
-          <Image src="/brand/medallion-520.webp" alt="" width={520} height={526} />
+          <Image src="/brand/medallion-520.webp" alt="" width={520} height={526} sizes="64px" />
           <h2 className="display ticket__title" id={`${id}-title`}>
             {sent ? t.ticket.sentTitle : t.ticket.title}
           </h2>
@@ -355,14 +387,14 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
               )}
               <ul className="lines" ref={linesRef}>
                 {cart.lines.map((l, i) => (
-                  <li className="line" key={l.id}>
-                    <span className="line__name">{l.dish.name}</span>
+                  <li className="line" key={l.key}>
+                    <span className="line__name">{l.label}</span>
                     <div className="stepper" role="group" aria-label={`${t.menu.qty}: ${l.dish.name}`}>
                       <button
                         type="button"
                         onClick={() => {
                           if (l.qty === 1) focusAfterRemove.current = i
-                          cart.set(l.id, l.qty - 1)
+                          cart.set(l.key, l.qty - 1)
                         }}
                         aria-label={l.qty === 1 ? `${t.ticket.remove}: ${l.dish.name}` : t.ticket.less}
                       >
@@ -371,14 +403,14 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
                       <output>{l.qty}</output>
                       <button
                         type="button"
-                        onClick={() => cart.set(l.id, l.qty + 1)}
+                        onClick={() => cart.set(l.key, l.qty + 1)}
                         aria-label={t.ticket.more}
                         disabled={l.qty >= MAX_QTY}
                       >
                         <IconPlus />
                       </button>
                     </div>
-                    <span className="line__price">{formatPrice(l.qty * l.dish.price)}</span>
+                    <span className="line__price">{formatPrice(l.qty * l.unit)}</span>
                   </li>
                 ))}
               </ul>
@@ -398,10 +430,33 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
                   <span>{t.ticket.total}</span>
                   <span>{formatPrice(total)}</span>
                 </div>
-                {mode === 'delivery' && settings.freeDeliveryFrom && fee > 0 && (
-                  <p className="sums__note">{fill(t.ticket.freeFrom, { p: formatPrice(settings.freeDeliveryFrom) })}</p>
+                {mode === 'delivery' && freeFrom ? (
+                  <div className="progress" aria-live="polite">
+                    <span className="progress__bar" style={{ ['--p' as string]: Math.min(1, cart.subtotal / freeFrom) }} aria-hidden="true" />
+                    <span>
+                      {cart.subtotal >= freeFrom
+                        ? t.ticket.freeReached
+                        : fill(t.ticket.freeLeft, { p: formatPrice(freeFrom - cart.subtotal) })}
+                    </span>
+                  </div>
+                ) : null}
+                {belowMin && (
+                  <p className="sums__note">{fill(t.ticket.minOrder, { p: formatPrice(minOrder), r: formatPrice(minOrder - cart.subtotal) })}</p>
                 )}
               </div>
+
+              {offer.length > 0 && (
+                <div className="upsell">
+                  <p>{t.ticket.upsell}</p>
+                  <div className="chips">
+                    {offer.map((d) => (
+                      <button key={d.id} type="button" onClick={() => cart.add(d.id, 1, defaultOpts(d))}>
+                        <IconPlus /> {d.name} · {formatPrice(d.price)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <form
                 className="form"
@@ -414,6 +469,12 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
               >
                 <fieldset className="seg">
                   <legend>{t.ticket.mode}</legend>
+                  {table && (
+                    <label>
+                      <input type="radio" name="mode" checked={mode === 'table'} onChange={() => setMode('table')} />
+                      {fill(t.ticket.modeTable, { n: table })}
+                    </label>
+                  )}
                   <label>
                     <input type="radio" name="mode" checked={mode === 'delivery'} onChange={() => setMode('delivery')} />
                     {t.ticket.modeDelivery}
@@ -441,12 +502,32 @@ export function Ticket({ t, settings }: { t: Dict; settings: SiteSettings }) {
                   <input {...field('name')} autoComplete="name" enterKeyHint="next" maxLength={60} />
                   {err('name')}
                 </div>
+                {mode === 'delivery' && settings.zones.length > 0 && (
+                  <fieldset className="seg seg--wrap seg--zones">
+                    <legend>{t.ticket.zone}</legend>
+                    {settings.zones.map((z) => (
+                      <label key={z.id}>
+                        <input type="radio" name="zone" checked={zoneId === z.id} onChange={() => setZoneId(z.id)} />
+                        <span>{z.name}</span>
+                        <small>
+                          {z.fee ? formatPrice(z.fee) : t.ticket.free}, {fill(t.ticket.eta, { a: z.etaMin, b: z.etaMax })}
+                        </small>
+                      </label>
+                    ))}
+                  </fieldset>
+                )}
                 {mode === 'delivery' && (
-                  <div className="field">
-                    <label htmlFor={`${id}-address`}>{t.ticket.address}</label>
-                    <input {...field('address')} autoComplete="street-address" enterKeyHint="next" maxLength={200} />
-                    {err('address')}
-                  </div>
+                  <>
+                    <div className="field">
+                      <label htmlFor={`${id}-address`}>{t.ticket.address}</label>
+                      <input {...field('address')} autoComplete="street-address" enterKeyHint="next" maxLength={200} />
+                      {err('address')}
+                    </div>
+                    <div className="field">
+                      <label htmlFor={`${id}-flat`}>{t.ticket.flat}</label>
+                      <input {...field('flat')} autoComplete="address-line2" enterKeyHint="next" maxLength={80} />
+                    </div>
+                  </>
                 )}
                 {settings.paymentMethods.length > 1 && (
                   <fieldset className="seg seg--wrap">

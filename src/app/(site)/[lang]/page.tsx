@@ -2,14 +2,12 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 
 import { Cape } from '@/components/Cape'
-import { CategoryLink } from '@/components/CategoryLink'
+import { LazyMotion, LazyTicket } from '@/components/Deferred'
 import { Header } from '@/components/Header'
 import { IconPhone } from '@/components/icons'
 import { MapEmbed } from '@/components/MapEmbed'
 import { Menu } from '@/components/Menu'
-import { Motion } from '@/components/Motion'
 import { HoursTable, OpenStatus } from '@/components/OpenStatus'
-import { Ticket } from '@/components/Ticket'
 import { getMenu, getSettings } from '@/lib/data'
 import { getDict, hasLocale } from '@/lib/i18n'
 import { jsonLd } from '@/lib/jsonld'
@@ -65,12 +63,19 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
               alt="Matador: shawarma, Angus burgers, BBQ & more"
               width={1400}
               height={1174}
-              priority
+              preload
               sizes="(max-width: 860px) 75vw, 60vw"
             />
           </div>
         </section>
 
+        {/* taps on "Add" / the ticket before the scripts have loaded are queued, not lost (see Menu, Header) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.__mq=[];document.addEventListener('click',function(e){if(window.__mh)return;var b=e.target.closest&&e.target.closest('[data-add],[data-ticket-target]');if(!b)return;if(b.hasAttribute('data-add')){window.__mq.push(b.getAttribute('data-add'));b.setAttribute('data-done','true')}else{window.__mt=1}},true);",
+          }}
+        />
         <Menu menu={menu} t={t} />
 
         <section className="house" id="house" aria-labelledby="house-title">
@@ -91,10 +96,10 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
                 .filter((c) => FIRES[c.slug])
                 .map((c) => (
                   <li key={c.slug}>
-                    <CategoryLink slug={c.slug}>
+                    <a href={`#cat-${c.slug}`}>
                       <strong>{FIRES[c.slug][lang]}</strong>
                       <span>{c.name}</span>
-                    </CategoryLink>
+                    </a>
                   </li>
                 ))}
             </ul>
@@ -181,8 +186,8 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
         </div>
       </footer>
 
-      <Ticket t={t} settings={s} />
-      <Motion />
+      <LazyTicket t={t} settings={s} drinks={menu.find((c) => c.slug === 'drinks')?.dishes ?? []} />
+      <LazyMotion />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(lang, menu, s, t) }} />
     </>
   )

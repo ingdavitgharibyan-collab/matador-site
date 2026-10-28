@@ -3,19 +3,20 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import type { MenuDish } from '@/lib/data'
+import { lineKey, lineLabel, unitPrice, validOpts } from '@/lib/menu'
 
-type Line = { id: string; qty: number }
+export type Line = { key: string; id: string; qty: number; opts: string[] }
 export type LastOrder = { lines: Line[]; at: number }
 
 type Ctx = {
-  lines: (Line & { dish: MenuDish })[]
+  lines: (Line & { dish: MenuDish; label: string; unit: number })[]
   /** dishes that were in the ticket but are not available today; shown once, then dropped */
   gone: string[]
   dismissGone: () => void
   count: number
   subtotal: number
-  add: (id: string, qty?: number) => void
-  set: (id: string, qty: number) => void
+  add: (id: string, qty?: number, opts?: string[]) => void
+  set: (key: string, qty: number) => void
   clear: () => Line[]
   restore: (lines: Line[]) => void
   lastOrder: LastOrder | null
@@ -30,18 +31,24 @@ const KEY = 'matador-ticket-v1'
 const LAST_KEY = 'matador-last-order-v1'
 export const MAX_QTY = 99
 
-/** Whatever is in storage (old versions, hand edits) becomes clean lines: string ids, integer 1–99, no duplicates. */
+/**
+ * Whatever is in storage (old versions, hand edits) becomes clean lines: string ids, integer 1–99, option ids as
+ * strings, one line per dish + choices.
+ */
 export function sanitizeLines(input: unknown): Line[] {
   if (!Array.isArray(input)) return []
-  const merged = new Map<string, number>()
+  const merged = new Map<string, Line>()
   for (const l of input) {
     if (!l || (typeof l.id !== 'string' && typeof l.id !== 'number')) continue
     const qty = Math.floor(Number(l.qty))
     if (!Number.isFinite(qty) || qty < 1) continue
     const id = String(l.id)
-    merged.set(id, Math.min(MAX_QTY, (merged.get(id) ?? 0) + qty))
+    const opts = Array.isArray(l.opts) ? l.opts.map(String) : []
+    const key = lineKey(id, opts)
+    const prev = merged.get(key)
+    merged.set(key, { key, id, opts, qty: Math.min(MAX_QTY, (prev?.qty ?? 0) + qty) })
   }
-  return [...merged].map(([id, qty]) => ({ id, qty }))
+  return [...merged.values()]
 }
 
 const read = (key: string) => {
@@ -74,7 +81,8 @@ export function CartProvider({ dishes, children }: { dishes: MenuDish[]; childre
       .filter(Boolean) as string[]
     const last = read(LAST_KEY)
     /* eslint-disable react-hooks/set-state-in-effect -- hydrate from storage once */
-    setRaw(keep)
+    // child effects (the pre-hydration tap queue in Menu) may already have added lines: merge, don't overwrite
+    setRaw((added) => sanitizeLines([...keep, ...added]))
     setGone(dropped)
     if (last && Array.isArray(last.lines)) setLastOrder({ lines: sanitizeLines(last.lines), at: Number(last.at) || 0 })
     setReady(true)
@@ -86,22 +94,29 @@ export function CartProvider({ dishes, children }: { dishes: MenuDish[]; childre
   }, [raw, ready])
 
   const lines = useMemo(
-    () => raw.flatMap((l) => (byId.get(l.id)?.available ? [{ ...l, dish: byId.get(l.id)! }] : [])),
+    () =>
+      raw.flatMap((l) => {
+        const dish = byId.get(l.id)
+        if (!dish?.available) return []
+        const opts = validOpts(dish, l.opts)
+        return [{ ...l, opts, dish, label: lineLabel(dish, opts), unit: unitPrice(dish, opts) }]
+      }),
     [raw, byId],
   )
 
-  const set = useCallback((id: string, qty: number) => {
+  const set = useCallback((key: string, qty: number) => {
     setRaw((prev) => {
       const q = Math.min(MAX_QTY, Math.floor(qty))
-      if (q <= 0) return prev.filter((l) => l.id !== id)
-      return prev.some((l) => l.id === id) ? prev.map((l) => (l.id === id ? { id, qty: q } : l)) : [...prev, { id, qty: q }]
+      if (q <= 0) return prev.filter((l) => l.key !== key)
+      return prev.map((l) => (l.key === key ? { ...l, qty: q } : l))
     })
   }, [])
-  const add = useCallback((id: string, qty = 1) => {
+  const add = useCallback((id: string, qty = 1, opts: string[] = []) => {
+    const key = lineKey(id, opts)
     setRaw((prev) => {
-      const cur = prev.find((l) => l.id === id)
-      if (!cur) return [...prev, { id, qty: Math.min(MAX_QTY, qty) }]
-      return prev.map((l) => (l.id === id ? { id, qty: Math.min(MAX_QTY, l.qty + qty) } : l))
+      const cur = prev.find((l) => l.key === key)
+      if (!cur) return [...prev, { key, id, opts, qty: Math.min(MAX_QTY, qty) }]
+      return prev.map((l) => (l.key === key ? { ...l, qty: Math.min(MAX_QTY, l.qty + qty) } : l))
     })
   }, [])
 
@@ -110,7 +125,7 @@ export function CartProvider({ dishes, children }: { dishes: MenuDish[]; childre
     gone,
     dismissGone: () => setGone([]),
     count: lines.reduce((s, l) => s + l.qty, 0),
-    subtotal: lines.reduce((s, l) => s + l.qty * l.dish.price, 0),
+    subtotal: lines.reduce((s, l) => s + l.qty * l.unit, 0),
     add,
     set,
     clear: () => {

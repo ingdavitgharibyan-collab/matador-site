@@ -57,7 +57,9 @@ export function proxy(request: NextRequest) {
   }
 
   const first = pathname.split('/')[1] ?? ''
-  if (ownTop.has(first) || first.includes('.')) return NextResponse.next()
+  // public files (/brand/logo.webp, /icon.png, /sitemap.xml) are served as they are
+  const isFile = (pathname.split('/').pop() ?? '').includes('.')
+  if (ownTop.has(first) || isFile) return NextResponse.next()
   if (locales.includes(first)) return NextResponse.next()
 
   // 3. /HY → /hy; anything else without a language (/, /menu, printed links) → the visitor's language

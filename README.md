@@ -3,15 +3,19 @@
 Restaurant site with an editable menu, ordering by WhatsApp / Telegram / phone, three languages (հայ / рус / eng).
 
 ## Features
-- **Menu as a bullfight poster**: categories switch with a sweeping red muleta; dish details dialog with quantity.
-- **Order ticket (cart)**: kept in the browser, delivery or pickup, delivery fee and free-delivery threshold,
+- **Menu as a bullfight poster**: one list with a sticky category bar (scrollspy; the red muleta sweeps across on a
+  jump), search, filters (spicy / no pork / vegetarian), dish sheet with choices (bread, sauce, "without…", paid
+  extras), pork, vegetarian and allergen labels. Every dish is readable without JavaScript.
+- **Order ticket (cart)**: kept in the browser; delivery zones (fee, minimum order, time), pickup or table;
+  free-delivery progress and a drink offer;
   sends a ready-made order to WhatsApp (prefilled), Telegram (copied + opens the chat) or by phone; links to
   delivery services (Yandex Eats, Wolt, Glovo, Menu.am — edit in admin).
 - **Live open / closed status** in Yerevan time (overnight shifts, 24 h days, holidays), weekly hours with the
   current shift highlighted. Orders are blocked when closed, in the last N minutes before closing, or when paused
   from the admin; calling stays possible.
 - **Map on request** (no third-party load until asked) + Google / Yandex directions.
-- **Printable QR table card**: `/hy/qr`, `/ru/qr`, `/en/qr`.
+- **Printable QR cards**: `/hy/qr` (general) and `/hy/qr?table=5` (per table: the ticket opens in "Table 5" mode,
+  no address or delivery fee). Same for `/ru` and `/en`.
 - **SEO**: per-language metadata and hreflang, schema.org Restaurant + Menu, sitemap, robots, OG image.
 - **Admin** at `/admin` (Payload): dishes (photo, price, weight, spicy, house pick, availability), categories,
   contacts, hours, delivery settings — each text in three languages.

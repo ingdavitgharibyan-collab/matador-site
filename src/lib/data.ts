@@ -21,7 +21,19 @@ export type MenuDish = {
   art: string
   photo: { url: string; alt: string } | null
   category: string
+  containsPork: boolean
+  vegetarian: boolean
+  allergens: string[]
+  optionGroups: OptionGroup[]
 }
+export type OptionGroup = {
+  id: string
+  name: string
+  multi: boolean
+  required: boolean
+  options: { id: string; name: string; price: number }[]
+}
+export type DeliveryZone = { id: string; name: string; fee: number; minOrder: number; freeFrom: number | null; etaMin: number; etaMax: number }
 export type MenuCategory = { slug: string; name: string; tagline: string; dishes: MenuDish[] }
 export type SiteSettings = {
   phone: string
@@ -40,6 +52,7 @@ export type SiteSettings = {
   paymentMethods: string[]
   deliveryFee: number
   freeDeliveryFrom: number | null
+  zones: DeliveryZone[]
   partners: { name: string; url: string }[]
 }
 
@@ -88,6 +101,18 @@ export const getMenu = cache(async (locale: Locale): Promise<MenuCategory[]> => 
             art: d.art ?? 'burger',
             photo: photoUrl ? { url: photoUrl, alt: photo?.alt ?? d.name } : null,
             category: c.slug,
+            containsPork: Boolean(d.containsPork),
+            vegetarian: Boolean(d.vegetarian),
+            allergens: (d.allergens ?? []) as string[],
+            optionGroups: (d.optionGroups ?? [])
+              .map((g) => ({
+                id: String(g.id),
+                name: g.name,
+                multi: Boolean(g.multi),
+                required: Boolean(g.required),
+                options: (g.options ?? []).map((o) => ({ id: String(o.id), name: o.name, price: o.price ?? 0 })),
+              }))
+              .filter((g) => g.options.length > 0),
           }
         }),
     }))
@@ -112,6 +137,15 @@ export const getSettings = cache(async (locale: Locale): Promise<SiteSettings> =
     pauseNote: s.pauseNote ?? '',
     lastOrderMinutes: s.lastOrderMinutes ?? 30,
     paymentMethods: s.paymentMethods?.length ? s.paymentMethods : ['cash'],
+    zones: (s.deliveryZones ?? []).map((z) => ({
+      id: String(z.id),
+      name: z.name,
+      fee: z.fee ?? 0,
+      minOrder: z.minOrder ?? 0,
+      freeFrom: z.freeFrom ?? null,
+      etaMin: z.etaMin ?? 30,
+      etaMax: z.etaMax ?? 45,
+    })),
     deliveryFee: s.deliveryFee ?? 0,
     freeDeliveryFrom: s.freeDeliveryFrom ?? null,
     partners: (s.partners ?? []).map((x) => ({ name: x.name, url: x.url })),

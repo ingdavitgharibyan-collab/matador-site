@@ -191,7 +191,7 @@ export const dishes: Dish[] = [
     description: {
       hy: 'Խոզի վիզ ածուխի վրա, սոխով և սումախով, լավաշի վրա։',
       ru: 'Свиная шея на углях, с луком и сумахом, на лаваше.',
-      en: 'Pork neck over charcoal with onion and sumac, served on lavash.',
+      en: 'Khorovats is Armenian barbecue: pork neck over charcoal with onion and sumac, served on lavash.',
     },
     ingredients: {
       hy: 'խոզի վիզ, սոխ, սումախ, կանաչի, լավաշ',
@@ -326,7 +326,7 @@ export const dishes: Dish[] = [
   {
     category: 'drinks',
     name: { hy: 'Թան', ru: 'Тан', en: 'Tan' },
-    description: { hy: 'Սառը, թեթև աղի։', ru: 'Холодный, слегка солёный.', en: 'Cold and lightly salted yogurt drink.' },
+    description: { hy: 'Սառը, թեթև աղի։', ru: 'Холодный, слегка солёный.', en: 'Tan: a cold, lightly salted Armenian yogurt drink.' },
     ingredients: { hy: 'մածուն, ջուր, աղ', ru: 'мацун, вода, соль', en: 'matsun, water, salt' },
     price: 600,
     weight: '0.5 L',
@@ -382,3 +382,99 @@ export const settings = {
   paymentMethods: ['cash', 'card_courier'] as ('cash' | 'card_courier')[],
   lastOrderMinutes: 30,
 }
+
+/* SAMPLE choices, diet flags and allergens per dish (keyed by the English name) — confirm with the kitchen. */
+type Opt = { name: L; price?: number }
+type Group = { name: L; multi?: boolean; required?: boolean; options: Opt[] }
+const bread: Group = {
+  name: { hy: 'Հաց', ru: 'Хлеб', en: 'Bread' },
+  required: true,
+  options: [{ name: { hy: 'Լավաշ', ru: 'Лаваш', en: 'Lavash' } }, { name: { hy: 'Պիտա', ru: 'Пита', en: 'Pita' } }],
+}
+const sauce: Group = {
+  name: { hy: 'Սոուս', ru: 'Соус', en: 'Sauce' },
+  required: true,
+  options: [
+    { name: { hy: 'Սխտորով', ru: 'Чесночный', en: 'Garlic' } },
+    { name: { hy: 'Թահինի', ru: 'Тахини', en: 'Tahini' } },
+    { name: { hy: 'Կծու կարմիր', ru: 'Острый красный', en: 'Hot red' } },
+  ],
+}
+const without = (items: L[]): Group => ({
+  name: { hy: 'Առանց', ru: 'Без', en: 'Without' },
+  multi: true,
+  options: items.map((name) => ({ name })),
+})
+const ONION = { hy: 'սոխի', ru: 'лука', en: 'onion' }
+const PICKLES = { hy: 'թթու վարունգի', ru: 'огурчиков', en: 'pickles' }
+const TOMATO = { hy: 'լոլիկի', ru: 'помидора', en: 'tomato' }
+const shawarmaExtras: Group = {
+  name: { hy: 'Ավելացնել', ru: 'Добавить', en: 'Extra' },
+  multi: true,
+  options: [
+    { name: { hy: 'Չեդեր', ru: 'Чеддер', en: 'Cheddar' }, price: 300 },
+    { name: { hy: 'Կրկնակի միս', ru: 'Двойное мясо', en: 'Double meat' }, price: 900 },
+    { name: { hy: 'Հալապենյո', ru: 'Халапеньо', en: 'Jalapeño' }, price: 200 },
+  ],
+}
+const burgerExtras: Group = {
+  name: { hy: 'Ավելացնել', ru: 'Добавить', en: 'Extra' },
+  multi: true,
+  options: [
+    { name: { hy: 'ԵՒս մեկ Angus կոտլետ', ru: 'Ещё котлета Angus', en: 'Extra Angus patty' }, price: 1500 },
+    { name: { hy: 'Բեկոն', ru: 'Бекон', en: 'Bacon' }, price: 500 },
+    { name: { hy: 'Չեդեր', ru: 'Чеддер', en: 'Cheddar' }, price: 300 },
+  ],
+}
+const meat: Group = {
+  name: { hy: 'Միս', ru: 'Мясо', en: 'Meat' },
+  required: true,
+  options: [{ name: { hy: 'Հավ', ru: 'Курица', en: 'Chicken' } }, { name: { hy: 'Տավար', ru: 'Говядина', en: 'Beef' } }],
+}
+const flavour: Group = {
+  name: { hy: 'Համ', ru: 'Вкус', en: 'Flavour' },
+  required: true,
+  options: [
+    { name: { hy: 'Կիտրոն', ru: 'Лимон', en: 'Lemon' } },
+    { name: { hy: 'Թարխուն', ru: 'Тархун', en: 'Tarragon' } },
+    { name: { hy: 'Նուռ', ru: 'Гранат', en: 'Pomegranate' } },
+  ],
+}
+
+export const dishExtras: Record<
+  string,
+  { containsPork?: boolean; vegetarian?: boolean; allergens?: string[]; optionGroups?: Group[] }
+> = {
+  'Chicken shawarma': { allergens: ['gluten', 'egg'], optionGroups: [bread, sauce, without([ONION, PICKLES, TOMATO]), shawarmaExtras] },
+  'Beef shawarma': { allergens: ['gluten', 'sesame'], optionGroups: [bread, sauce, without([ONION, TOMATO]), shawarmaExtras] },
+  'Matador XL': { allergens: ['gluten', 'milk', 'egg'], optionGroups: [bread, without([ONION, TOMATO])] },
+  'Shawarma plate': { allergens: ['gluten', 'sesame', 'egg'], optionGroups: [meat, without([ONION])] },
+  'Classic Angus': { allergens: ['gluten', 'milk', 'egg', 'mustard'], optionGroups: [without([ONION, PICKLES]), burgerExtras] },
+  'Double cheese': { allergens: ['gluten', 'milk', 'mustard'], optionGroups: [without([ONION, PICKLES]), burgerExtras] },
+  Toro: { allergens: ['gluten', 'milk', 'egg'], optionGroups: [without([ONION]), burgerExtras] },
+  'Matador Double': { containsPork: true, allergens: ['gluten', 'milk'], optionGroups: [without([ONION]), burgerExtras] },
+  'Pork khorovats': { containsPork: true, allergens: ['gluten'] },
+  'Lamb chops': {},
+  'Chicken khorovats': { allergens: ['milk', 'gluten'] },
+  'Lula kebab': { allergens: ['gluten'] },
+  'BBQ ribs': { containsPork: true, allergens: ['mustard'] },
+  'French fries': { vegetarian: true },
+  'Country potatoes': { vegetarian: true },
+  'Summer salad': { vegetarian: true },
+  Sauce: { vegetarian: true, allergens: ['egg', 'milk', 'sesame'], optionGroups: [{ ...sauce, options: [...sauce.options, { name: { hy: 'Պանրով', ru: 'Сырный', en: 'Cheese' } }] }] },
+  Tan: { vegetarian: true, allergens: ['milk'] },
+  'House lemonade': { vegetarian: true, optionGroups: [flavour] },
+  Cola: { vegetarian: true },
+}
+
+export const deliveryZones = [
+  { name: { hy: 'Կենտրոն', ru: 'Центр', en: 'Kentron' }, fee: 500, minOrder: 3000, freeFrom: 10000, etaMin: 30, etaMax: 45 },
+  {
+    name: { hy: 'Արաբկիր, Նոր Նորք, Քանաքեռ', ru: 'Арабкир, Нор Норк, Канакер', en: 'Arabkir, Nor Nork, Kanaker' },
+    fee: 900,
+    minOrder: 5000,
+    freeFrom: 15000,
+    etaMin: 45,
+    etaMax: 65,
+  },
+]
